@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Asana Subtask Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0c0e;
+    --surface: #13151a;
+    --surface2: #1c1f27;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #f0f0ee;
+    --muted: #7a7d86;
+    --art: #e8c86a;
+    --art-bg: rgba(232,200,106,0.1);
+    --art-border: rgba(232,200,106,0.25);
+    --ops: #6ab8e8;
+    --ops-bg: rgba(106,184,232,0.1);
+    --ops-border: rgba(106,184,232,0.25);
+    --copy: #b06ae8;
+    --copy-bg: rgba(176,106,232,0.1);
+    --copy-border: rgba(176,106,232,0.25);
+    --config: #e86a9b;
+    --config-bg: rgba(232,106,155,0.1);
+    --config-border: rgba(232,106,155,0.25);
+    --success: #6ae8a0;
+    --success-bg: rgba(106,232,160,0.08);
+    --danger: #e87a6a;
+    --warn: #e8b46a;
+    --warn-bg: rgba(232,180,106,0.08);
+    --accent: #9b8cff;
+  }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px 80px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 700px; height: 400px;
+    background: radial-gradient(ellipse, rgba(155,140,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { width: 100%; max-width: 600px; position: relative; z-index: 1; }
+
+  header { margin-bottom: 48px; text-align: center; }
+
+  .logo-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; background: var(--surface2);
+    border: 1px solid var(--border-strong); border-radius: 12px;
+    margin-bottom: 20px; font-size: 20px;
+  }
+
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); margin-bottom: 8px; }
+  .subtitle { font-size: 14px; color: var(--muted); font-weight: 400; line-height: 1.6; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:focus-within { border-color: var(--border-strong); }
+
+  .card-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .dates-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.02em; }
+
+  .label-tag {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 1px 6px; border-radius: 4px; letter-spacing: 0.05em;
+    text-transform: uppercase; margin-left: 5px; vertical-align: 1px;
+  }
+  .label-tag.art    { background: var(--art-bg);    color: var(--art);    border: 1px solid var(--art-border); }
+  .label-tag.ops    { background: var(--ops-bg);    color: var(--ops);    border: 1px solid var(--ops-border); }
+  .label-tag.copy   { background: var(--copy-bg);   color: var(--copy);   border: 1px solid var(--copy-border); }
+  .label-tag.config { background: var(--config-bg); color: var(--config); border: 1px solid var(--config-border); }
+
+  .field input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+    font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text);
+    outline: none; transition: border-color 0.2s, background 0.2s; -webkit-appearance: none;
+  }
+  .field input:focus { border-color: var(--accent); background: rgba(155,140,255,0.05); }
+  .field input::placeholder { color: var(--muted); opacity: 0.5; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+
+  .config-preview {
+    display: none; align-items: center; gap: 8px; margin-top: 8px;
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    padding: 8px 12px; border-radius: 8px; border: 1px solid;
+  }
+  .config-preview.normal  { background: var(--config-bg); border-color: var(--config-border); color: var(--config); }
+  .config-preview.adjusted { background: var(--warn-bg); border-color: rgba(232,180,106,0.25); color: var(--warn); }
+  .config-preview .preview-icon { font-size: 14px; flex-shrink: 0; }
+
+  .shared-date-note {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(232,200,106,0.06); border: 1px solid rgba(232,200,106,0.15);
+    border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--muted);
+    font-family: 'DM Mono', monospace; margin-top: -6px; margin-bottom: 8px;
+  }
+  .shared-date-note .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .shared-date-note .dot.art { background: var(--art); }
+  .shared-date-note .dot.ops { background: var(--ops); }
+
+  .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .rule-chip { border-radius: 10px; padding: 12px 14px; border: 1px solid; display: flex; flex-direction: column; gap: 5px; }
+  .rule-chip.art    { background: var(--art-bg);    border-color: var(--art-border); }
+  .rule-chip.ops    { background: var(--ops-bg);    border-color: var(--ops-border); }
+  .rule-chip.copy   { background: var(--copy-bg);   border-color: var(--copy-border); }
+  .rule-chip.config { background: var(--config-bg); border-color: var(--config-border); }
+
+  .rule-chip .chip-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+  .rule-chip.art    .chip-label { color: var(--art); }
+  .rule-chip.ops    .chip-label { color: var(--ops); }
+  .rule-chip.copy   .chip-label { color: var(--copy); }
+  .rule-chip.config .chip-label { color: var(--config); }
+  .rule-chip .chip-desc { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; line-height: 1.6; }
+
+  /* Login screen */
+  #loginArea { text-align: center; }
+
+  .login-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 40px 28px; margin-bottom: 16px;
+  }
+
+  .login-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+  .login-card p { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+
+  .asana-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 14px 28px; background: #F06A6A; color: #fff;
+    border: none; border-radius: 12px; font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em;
+    text-decoration: none;
+  }
+  .asana-btn:hover { opacity: 0.9; }
+  .asana-btn:active { transform: scale(0.99); }
+
+  .asana-logo { width: 20px; height: 20px; }
+
+  /* User bar */
+  .user-bar {
+    display: none; align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .user-bar .user-info { display: flex; align-items: center; gap: 10px; }
+  .user-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .user-name { font-weight: 600; color: var(--text); }
+  .user-email { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .logout-btn {
+    background: transparent; border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; font-family: 'Syne', sans-serif; font-size: 12px;
+    color: var(--muted); cursor: pointer; transition: color 0.15s, border-color 0.15s;
+  }
+  .logout-btn:hover { color: var(--text); border-color: var(--border-strong); }
+
+  .run-btn {
+    width: 100%; padding: 15px; background: var(--text); color: var(--bg);
+    border: none; border-radius: 12px; font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 8px; letter-spacing: 0.02em;
+  }
+  .run-btn:hover { opacity: 0.9; }
+  .run-btn:active { transform: scale(0.99); }
+  .run-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: var(--bg); border-radius: 50%;
+    animation: spin 0.7s linear infinite; display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #resultsArea { display: none; }
+
+  .summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+  .stat .num { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+  .stat.art    .num { color: var(--art); }
+  .stat.ops    .num { color: var(--ops); }
+  .stat.copy   .num { color: var(--copy); }
+  .stat.config .num { color: var(--config); }
+  .stat .lbl { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+  .log-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+
+  .log-entries {
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 360px; overflow-y: auto; padding-right: 4px;
+  }
+  .log-entries::-webkit-scrollbar { width: 4px; }
+  .log-entries::-webkit-scrollbar-track { background: transparent; }
+  .log-entries::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+  .log-line {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.5;
+    padding: 6px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.2s ease;
+  }
+  .log-line:last-child { border-bottom: none; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .log-icon { font-size: 13px; margin-top: 1px; flex-shrink: 0; min-width: 14px; }
+  .log-icon.ok   { color: var(--success); }
+  .log-icon.err  { color: var(--danger); }
+  .log-icon.wait { color: var(--muted); }
+  .log-icon.warn { color: var(--warn); }
+  .log-text { color: var(--text); flex: 1; }
+
+  .tag {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 1px 7px; border-radius: 5px; letter-spacing: 0.05em;
+    text-transform: uppercase; vertical-align: 1px;
+  }
+  .tag.art    { background: var(--art-bg);    color: var(--art);    border: 1px solid var(--art-border); }
+  .tag.ops    { background: var(--ops-bg);    color: var(--ops);    border: 1px solid var(--ops-border); }
+  .tag.copy   { background: var(--copy-bg);   color: var(--copy);   border: 1px solid var(--copy-border); }
+  .tag.config { background: var(--config-bg); color: var(--config); border: 1px solid var(--config-border); }
+
+  .done-banner {
+    display: none; align-items: center; gap: 10px;
+    background: var(--success-bg); border: 1px solid rgba(106,232,160,0.2);
+    border-radius: 10px; padding: 12px 16px;
+    font-size: 13px; font-weight: 500; color: var(--success); margin-bottom: 16px;
+  }
+
+  .reset-btn {
+    width: 100%; padding: 12px; background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 10px;
+    font-family: 'Syne', sans-serif; font-size: 13px; cursor: pointer; margin-top: 12px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .reset-btn:hover { color: var(--text); border-color: var(--border-strong); }
+
+  footer { margin-top: 48px; text-align: center; font-size: 12px; color: var(--muted); opacity: 0.5; }
+
+  .error-banner {
+    background: rgba(232,122,106,0.08); border: 1px solid rgba(232,122,106,0.25);
+    border-radius: 10px; padding: 14px 18px; font-size: 13px; color: var(--danger);
+    margin-bottom: 16px; line-height: 1.6; font-family: 'DM Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <div class="logo-mark">⚡</div>
+    <h1>Asana Subtask Manager</h1>
+    <p class="subtitle">Automatically assign subtasks to projects<br>with the right due dates.</p>
+  </header>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginArea">
+    <div id="oauthError" class="error-banner" style="display:none;"></div>
+    <div class="login-card">
+      <h2>Connect your Asana account</h2>
+      <p>Sign in with Asana so your actions are<br>recorded under your own account.</p>
+      <button class="asana-btn" onclick="loginWithAsana()">
+        <svg class="asana-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="22" r="22" fill="white"/>
+          <circle cx="18" cy="72" r="18" fill="white"/>
+          <circle cx="82" cy="72" r="18" fill="white"/>
+        </svg>
+        Login with Asana
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="appArea" style="display:none;">
+
+    <div class="user-bar" id="userBar">
+      <div class="user-info">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div>
+          <div class="user-name" id="userName">Loading…</div>
+          <div class="user-email" id="userEmail"></div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div id="formArea">
+      <div class="card">
+        <div class="card-label">Task input</div>
+        <div class="field">
+          <label>Asana task ID</label>
+          <input type="text" id="taskId" placeholder="e.g. 1214890076610741" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Due dates</div>
+        <div class="dates-grid">
+          <div class="field" style="grid-column: 1 / -1;">
+            <label>Due date <span class="label-tag art">Art</span><span class="label-tag ops">OPS</span></label>
+            <div class="shared-date-note">
+              <span class="dot art"></span><span class="dot ops"></span>
+              <span>Art and OPS share the same due date</span>
+            </div>
+            <input type="date" id="dueArtOps" oninput="updateConfigPreview()" />
+          </div>
+          <div class="field">
+            <label>Due date <span class="label-tag copy">Copy</span></label>
+            <input type="date" id="dueCopy" />
+          </div>
+          <div class="field">
+            <label>Due date <span class="label-tag config">Config</span></label>
+            <input type="date" id="dueConfig" oninput="updateConfigPreview()" />
+            <div class="config-preview" id="configPreview">
+              <span class="preview-icon" id="configPreviewIcon"></span>
+              <span id="configPreviewText"></span>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:12px;line-height:1.6;">
+          * Config auto-sets to OPS −5 days if left empty.<br>
+          * If that date falls on Fri/Sat/Sun, it shifts back to the Thursday before.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Automation rules</div>
+        <div class="rules-grid">
+          <div class="rule-chip art">
+            <span class="chip-label">— Art</span>
+            <span class="chip-desc">→ Design Space<br>#1202103624709698<br>+ Art/OPS due date</span>
+          </div>
+          <div class="rule-chip ops">
+            <span class="chip-label">— OPS</span>
+            <span class="chip-desc">→ OPS Project<br>#1202720677378175<br>+ Art/OPS due date</span>
+          </div>
+          <div class="rule-chip copy">
+            <span class="chip-label">— Copy</span>
+            <span class="chip-desc">→ Project<br>#1202805118467140<br>+ Copy due date</span>
+          </div>
+          <div class="rule-chip config">
+            <span class="chip-label">— Config</span>
+            <span class="chip-desc">→ HC Economy Team<br>&nbsp;&nbsp;↳ section: Calendar tasks<br>→ Project #1202681320802528<br>+ Config due date<br>&nbsp;&nbsp;(no Fri/Sat/Sun → Thu)</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="run-btn" id="runBtn" onclick="run()">
+        <div class="spinner" id="spinner"></div>
+        <span id="btnText">Run automation</span>
+      </button>
+    </div>
+
+    <div id="resultsArea">
+      <div class="done-banner" id="doneBanner">✓ &nbsp;Automation complete</div>
+      <div class="summary-row">
+        <div class="stat art"><span class="num" id="artCount">0</span><span class="lbl">Art updated</span></div>
+        <div class="stat ops"><span class="num" id="opsCount">0</span><span class="lbl">OPS updated</span></div>
+        <div class="stat copy"><span class="num" id="copyCount">0</span><span class="lbl">Copy updated</span></div>
+        <div class="stat config"><span class="num" id="configCount">0</span><span class="lbl">Config updated</span></div>
+      </div>
+      <div class="log-card">
+        <div class="card-label" style="margin-bottom:16px;">Progress log</div>
+        <div class="log-entries" id="log"></div>
+      </div>
+      <button class="reset-btn" onclick="resetForm()">← Run another task</button>
+    </div>
+
+  </div>
+
+  <footer>Powered by Asana API &nbsp;·&nbsp; Built for your workflow</footer>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const CLIENT_ID     = "1214940964091051";
+const REDIRECT_URI  = window.location.href.split("?")[0].split("#")[0];
+const ASANA_AUTH    = "https://app.asana.com/-/oauth_authorize";
+const ASANA_TOKEN   = "https://app.asana.com/-/oauth_token";
+const ASANA_API     = "https://app.asana.com/api/1.0";
+
+const RULES = {
+  art:    [{ project: "1202103624709698", section: null }],
+  ops:    [{ project: "1202720677378175", section: null }],
+  copy:   [{ project: "1202805118467140", section: null }],
+  config: [
+    { project: "1201933871229088", section: "1201933871229089" },
+    { project: "1202681320802528", section: null }
+  ]
+};
+
+const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+// ── AUTH STATE ───────────────────────────────────────────────────────────────
+let accessToken = localStorage.getItem("asana_token") || null;
+
+function loginWithAsana() {
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem("oauth_state", state);
+  const params = new URLSearchParams({
+    client_id:     CLIENT_ID,
+    redirect_uri:  REDIRECT_URI,
+    response_type: "code",
+    state
+  });
+  window.location.href = `${ASANA_AUTH}?${params}`;
+}
+
+async function exchangeCode(code) {
+  // NOTE: In a real hosted deployment, this exchange should happen server-side
+  // to keep the client secret safe. For local/team use this is acceptable.
+  const CLIENT_SECRET = "20d6386dcb65b65a8043630f2121f600";
+  const res = await fetch(ASANA_TOKEN, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type:    "authorization_code",
+      client_id:     CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      redirect_uri:  REDIRECT_URI,
+      code
+    })
+  });
+  const data = await res.json();
+  if (data.access_token) {
+    accessToken = data.access_token;
+    localStorage.setItem("asana_token", accessToken);
+    return true;
+  }
+  return false;
+}
+
+async function asanaGet(path) {
+  const res = await fetch(`${ASANA_API}${path}`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  if (res.status === 401) { logout(); throw new Error("Session expired. Please log in again."); }
+  return res.json();
+}
+
+async function asanaPost(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (res.status === 401) { logout(); throw new Error("Session expired. Please log in again."); }
+  return res.json();
+}
+
+async function asanaPut(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (res.status === 401) { logout(); throw new Error("Session expired. Please log in again."); }
+  return res.json();
+}
+
+function logout() {
+  localStorage.removeItem("asana_token");
+  accessToken = null;
+  document.getElementById("appArea").style.display = "none";
+  document.getElementById("loginArea").style.display = "block";
+  document.getElementById("userBar").style.display = "none";
+}
+
+async function loadUser() {
+  try {
+    const data = await asanaGet("/users/me");
+    const user = data.data;
+    const initials = user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+    document.getElementById("userAvatar").textContent = initials;
+    document.getElementById("userName").textContent   = user.name;
+    document.getElementById("userEmail").textContent  = user.email || "";
+    document.getElementById("userBar").style.display  = "flex";
+  } catch(e) { /* silently fail */ }
+}
+
+// ── DATE HELPERS ─────────────────────────────────────────────────────────────
+function subtractDays(dateStr, days) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() - days);
+  return d.toISOString().split("T")[0];
+}
+
+function avoidWeekend(dateStr) {
+  const d = new Date(dateStr);
+  const day = d.getDay();
+  if (day === 5) d.setDate(d.getDate() - 2);
+  if (day === 6) d.setDate(d.getDate() - 3);
+  if (day === 0) d.setDate(d.getDate() - 4);
+  return d.toISOString().split("T")[0];
+}
+
+function computeConfigDate(dueArtOps, manualConfig) {
+  if (manualConfig) {
+    const adjusted = avoidWeekend(manualConfig);
+    return { date: adjusted, wasAdjusted: adjusted !== manualConfig, source: "manual", original: manualConfig };
+  }
+  if (dueArtOps) {
+    const minus5   = subtractDays(dueArtOps, 5);
+    const adjusted = avoidWeekend(minus5);
+    return { date: adjusted, wasAdjusted: adjusted !== minus5, source: "auto", original: minus5 };
+  }
+  return null;
+}
+
+function updateConfigPreview() {
+  const dueArtOps    = document.getElementById("dueArtOps").value;
+  const manualConfig = document.getElementById("dueConfig").value;
+  const preview      = document.getElementById("configPreview");
+  const previewText  = document.getElementById("configPreviewText");
+  const previewIcon  = document.getElementById("configPreviewIcon");
+
+  if (!dueArtOps && !manualConfig) { preview.style.display = "none"; return; }
+
+  const result = computeConfigDate(dueArtOps, manualConfig);
+  if (!result) { preview.style.display = "none"; return; }
+
+  preview.style.display = "flex";
+
+  if (result.wasAdjusted) {
+    const originalDay = DAY_NAMES[new Date(result.original).getDay()];
+    preview.className = "config-preview adjusted";
+    previewIcon.textContent = "⚠";
+    previewText.innerHTML = `${originalDay} → shifted to Thursday <strong>${result.date}</strong>`;
+  } else {
+    preview.className = "config-preview normal";
+    previewIcon.textContent = "✓";
+    const label = result.source === "auto" ? "auto: OPS −5 days → " : "";
+    previewText.innerHTML = `${label}<strong>${DAY_NAMES[new Date(result.date).getDay()]} ${result.date}</strong>`;
+  }
+}
+
+// ── LOGGING ──────────────────────────────────────────────────────────────────
+function addLog(msg, type = "wait") {
+  const el = document.getElementById("log");
+  const line = document.createElement("div");
+  line.className = "log-line";
+  const icons = { ok: "✓", err: "✗", wait: "·", warn: "⚠" };
+  line.innerHTML = `<span class="log-icon ${type}">${icons[type]}</span><span class="log-text">${msg}</span>`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+  return line;
+}
+
+function updateLine(line, msg, type) {
+  const icons = { ok: "✓", err: "✗", wait: "·", warn: "⚠" };
+  line.querySelector(".log-icon").className = `log-icon ${type}`;
+  line.querySelector(".log-icon").textContent = icons[type];
+  line.querySelector(".log-text").innerHTML = msg;
+}
+
+// ── ASANA OPERATIONS ─────────────────────────────────────────────────────────
+async function getSubtasks(taskId) {
+  const data = await asanaGet(`/tasks/${taskId}?opt_fields=subtasks,subtasks.name,subtasks.gid`);
+  return data.data.subtasks || [];
+}
+
+async function addTaskToProject(taskGid, projectGid, sectionGid) {
+  const body = { data: { project: projectGid } };
+  if (sectionGid) body.data.section = sectionGid;
+  await asanaPost(`/tasks/${taskGid}/addProject`, body);
+}
+
+async function setDueDate(taskGid, dueOn) {
+  await asanaPut(`/tasks/${taskGid}`, { data: { due_on: dueOn } });
+}
+
+async function updateSubtask(gid, projects, dueOn) {
+  for (const p of projects) {
+    await addTaskToProject(gid, p.project, p.section);
+  }
+  if (dueOn) await setDueDate(gid, dueOn);
+  return true;
+}
+
+function getSuffix(name) {
+  if (/[-–]\s*Art$/.test(name) || name === "Art")       return "art";
+  if (/[-–]\s*OPS$/.test(name) || name === "OPS")       return "ops";
+  if (/[-–]\s*Copy$/.test(name) || name === "Copy")     return "copy";
+  if (/[-–]\s*Config$/.test(name) || name === "Config") return "config";
+  return null;
+}
+
+// ── RUN ──────────────────────────────────────────────────────────────────────
+async function run() {
+  const taskId       = document.getElementById("taskId").value.trim();
+  const dueArtOps    = document.getElementById("dueArtOps").value;
+  const dueCopy      = document.getElementById("dueCopy").value;
+  const manualConfig = document.getElementById("dueConfig").value;
+
+  if (!taskId)    { alert("Please enter a task ID."); return; }
+  if (!dueArtOps) { alert("Please enter a due date for Art & OPS subtasks."); return; }
+  if (!dueCopy)   { alert("Please enter a due date for Copy subtasks."); return; }
+
+  const configResult = computeConfigDate(dueArtOps, manualConfig);
+  const dueConfig    = configResult ? configResult.date : subtractDays(dueArtOps, 5);
+
+  const btn     = document.getElementById("runBtn");
+  const spinner = document.getElementById("spinner");
+  const btnText = document.getElementById("btnText");
+
+  btn.disabled = true;
+  spinner.style.display = "block";
+  btnText.textContent = "Running…";
+
+  document.getElementById("formArea").style.display = "none";
+  document.getElementById("resultsArea").style.display = "block";
+  document.getElementById("doneBanner").style.display = "none";
+  document.getElementById("log").innerHTML = "";
+
+  const counts     = { art: 0, ops: 0, copy: 0, config: 0 };
+  const dueDateMap = { art: dueArtOps, ops: dueArtOps, copy: dueCopy, config: dueConfig };
+
+  try {
+    const fetchLine = addLog(`Fetching subtasks for task <strong>${taskId}</strong>…`);
+    const subtasks  = await getSubtasks(taskId);
+    updateLine(fetchLine, `Found <strong>${subtasks.length}</strong> subtask(s)`, "ok");
+
+    if (configResult && configResult.wasAdjusted) {
+      addLog(`Config date adjusted: <strong>${configResult.original}</strong> (${DAY_NAMES[new Date(configResult.original).getDay()]}) → <strong>${dueConfig}</strong> (Thursday)`, "warn");
+    } else {
+      const label = !manualConfig ? "auto: OPS −5 days" : "manual";
+      addLog(`Config due date: <strong>${dueConfig}</strong> (${DAY_NAMES[new Date(dueConfig).getDay()]}) — ${label}`, "wait");
+    }
+
+    const matched = subtasks.filter(t => getSuffix(t.name));
+    const skipped = subtasks.length - matched.length;
+    if (skipped > 0) addLog(`Skipping ${skipped} subtask(s) — no matching suffix`, "wait");
+
+    for (const t of matched) {
+      const type      = getSuffix(t.name);
+      const shortName = t.name.split(/[-–]/).pop().trim();
+      const due       = dueDateMap[type];
+      const projects  = RULES[type];
+      const dueLabel  = due ? ` + due ${due}` : "";
+
+      const line = addLog(`<span class="tag ${type}">${type}</span> ${shortName}…`);
+      try {
+        await updateSubtask(t.gid, projects, due);
+        updateLine(line, `<span class="tag ${type}">${type}</span> ${shortName} — done${dueLabel}`, "ok");
+        counts[type]++;
+      } catch(e) {
+        updateLine(line, `<span class="tag ${type}">${type}</span> ${shortName} — failed: ${e.message}`, "err");
+      }
+    }
+
+    addLog("All tasks processed.", "ok");
+    document.getElementById("doneBanner").style.display = "flex";
+  } catch(err) {
+    addLog(`Error: ${err.message}`, "err");
+  }
+
+  document.getElementById("artCount").textContent    = counts.art;
+  document.getElementById("opsCount").textContent    = counts.ops;
+  document.getElementById("copyCount").textContent   = counts.copy;
+  document.getElementById("configCount").textContent = counts.config;
+
+  btn.disabled = false;
+  spinner.style.display = "none";
+  btnText.textContent = "Run automation";
+}
+
+function resetForm() {
+  document.getElementById("formArea").style.display = "block";
+  document.getElementById("resultsArea").style.display = "none";
+  document.getElementById("taskId").value    = "";
+  document.getElementById("dueArtOps").value = "";
+  document.getElementById("dueCopy").value   = "";
+  document.getElementById("dueConfig").value = "";
+  document.getElementById("configPreview").style.display = "none";
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get("code");
+  const state  = params.get("state");
+  const error  = params.get("error");
+
+  // Clean URL
+  if (code || error) window.history.replaceState({}, document.title, window.location.pathname);
+
+  if (error) {
+    document.getElementById("oauthError").style.display = "block";
+    document.getElementById("oauthError").textContent = `Asana login error: ${error}. Please try again.`;
+    document.getElementById("loginArea").style.display = "block";
+    return;
+  }
+
+  if (code) {
+    const savedState = sessionStorage.getItem("oauth_state");
+    if (state !== savedState) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "OAuth state mismatch. Please try logging in again.";
+      document.getElementById("loginArea").style.display = "block";
+      return;
+    }
+    sessionStorage.removeItem("oauth_state");
+    const ok = await exchangeCode(code);
+    if (!ok) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "Failed to exchange login code. Please try again.";
+      document.getElementById("loginArea").style.display = "block";
+      return;
+    }
+  }
+
+  if (accessToken) {
+    document.getElementById("loginArea").style.display = "none";
+    document.getElementById("appArea").style.display   = "block";
+    await loadUser();
+  } else {
+    document.getElementById("loginArea").style.display = "block";
+    document.getElementById("appArea").style.display   = "none";
+  }
+}
+
+init();
+</script>
+</body>
+</html>
