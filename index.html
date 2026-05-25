@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Promo Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #F5F4F0;
+    --surface: #FFFFFF;
+    --surface2: #EFEDE8;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1917;
+    --text-2: #6B6860;
+    --text-3: #A09D97;
+    --accent-blue: #2B5BE0;
+    --accent-blue-bg: #EEF2FD;
+    --accent-green: #1A7A4A;
+    --accent-green-bg: #E8F5EE;
+    --accent-amber: #9B5A00;
+    --accent-amber-bg: #FDF3E3;
+    --accent-purple: #5B35C4;
+    --accent-purple-bg: #F0ECFB;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── PAGE SYSTEM ── */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* ── HOME PAGE ── */
+  .home-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 80px;
+  }
+
+  .home-eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 12px;
+  }
+
+  .home-title {
+    font-size: 36px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .home-sub {
+    font-size: 15px;
+    color: var(--text-2);
+    line-height: 1.6;
+    margin-bottom: 48px;
+    max-width: 420px;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  @media (max-width: 520px) {
+    .cards-grid { grid-template-columns: 1fr; }
+    .home-title { font-size: 28px; }
+  }
+
+  .tool-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .tool-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  }
+  .tool-card:active { transform: translateY(0); }
+
+  .card-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 99px;
+    margin-bottom: 16px;
+  }
+  .tag-blue { background: var(--accent-blue-bg); color: var(--accent-blue); }
+  .tag-green { background: var(--accent-green-bg); color: var(--accent-green); }
+  .tag-amber { background: var(--accent-amber-bg); color: var(--accent-amber); }
+  .tag-purple { background: var(--accent-purple-bg); color: var(--accent-purple); }
+
+  .card-name {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.55;
+    margin-bottom: 20px;
+  }
+
+  .card-arrow {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-3);
+  }
+  .tool-card:hover .card-arrow { color: var(--text-2); }
+  .card-arrow svg { width: 14px; height: 14px; transition: transform 0.15s; }
+  .tool-card:hover .card-arrow svg { transform: translateX(3px); }
+
+  .card-soon {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+  }
+  .soon-badge {
+    position: absolute;
+    top: 14px; right: 14px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--surface2);
+    color: var(--text-3);
+    padding: 3px 8px;
+    border-radius: 99px;
+  }
+
+  .home-footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  /* ── TOOL PAGE ── */
+  .tool-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 52px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-2);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0;
+    transition: color 0.1s;
+  }
+  .back-btn:hover { color: var(--text); }
+  .back-btn svg { width: 15px; height: 15px; }
+
+  .header-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--border);
+  }
+
+  .header-tool-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .header-tag {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 99px;
+  }
+
+  .tool-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 36px 24px 80px;
+  }
+
+  .tool-title {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-bottom: 4px;
+  }
+
+  .tool-desc {
+    font-size: 14px;
+    color: var(--text-2);
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-full { grid-column: 1 / -1; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-2);
+  }
+  .field input, .field select, .field textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--border-strong);
+  }
+  .field textarea { resize: vertical; min-height: 76px; line-height: 1.5; }
+
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+  /* ── TOGGLES ── */
+  .toggle-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+  .toggle {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 12px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-2);
+    cursor: pointer;
+    background: var(--surface);
+    user-select: none;
+    transition: all 0.12s;
+  }
+  .toggle.on { background: var(--accent-blue-bg); border-color: transparent; color: var(--accent-blue); }
+
+  /* ── FLAGS ── */
+  .flag-row { display: flex; flex-wrap: wrap; gap: 7px; }
+  .flag {
+    padding: 5px 12px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-2);
+    cursor: pointer;
+    background: var(--surface);
+    user-select: none;
+    transition: all 0.12s;
+  }
+  .flag.on { background: var(--accent-green-bg); border-color: transparent; color: var(--accent-green); }
+
+  /* ── RICH TEXT ── */
+  .rte { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+  .rte-bar {
+    display: flex; gap: 2px; padding: 5px 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .rte-btn {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: none; border-radius: 5px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; color: var(--text-2);
+    transition: background 0.1s, color 0.1s;
+  }
+  .rte-btn:hover { background: var(--surface); color: var(--text); }
+  .rte-sep { width: 1px; background: var(--border); margin: 4px 3px; }
+  .rte-area {
+    min-height: 80px; padding: 10px 12px;
+    font-size: 14px; line-height: 1.6;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--surface);
+  }
+  .rte-area ul, .rte-area ol { padding-left: 1.4em; }
+
+  /* ── BANNERS ── */
+  .banner-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+  .banner-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    background: var(--bg);
+  }
+  .banner-card-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .banner-num {
+    font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-3); flex: 1;
+  }
+  .banner-remove {
+    border: none; background: none; cursor: pointer;
+    color: var(--text-3); font-size: 15px; line-height: 1;
+    padding: 0; transition: color 0.1s;
+  }
+  .banner-remove:hover { color: #C0392B; }
+  .banner-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .add-btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%; padding: 8px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: none;
+    font-size: 13px; color: var(--text-2);
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.12s;
+  }
+  .add-btn:hover { border-color: var(--text-2); color: var(--text); background: var(--surface); }
+
+  /* ── SECTION BLOCK ── */
+  .section-block { margin-top: 20px; }
+  .section-block-head {
+    font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-2);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 7px;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: var(--text);
+    color: var(--surface);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.12s, transform 0.12s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .btn-secondary:hover { background: var(--bg); }
+
+  /* ── STATUS BOX ── */
+  .status { display: none; margin-top: 16px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; line-height: 1.5; }
+  .status.info { background: var(--accent-blue-bg); color: var(--accent-blue); display: block; }
+  .status.success { background: var(--accent-green-bg); color: var(--accent-green); display: block; }
+
+  /* ── SUBTASK PAGE ── */
+  .subtask-iframe-wrap { width: 100%; }
+  .subtask-iframe-wrap iframe {
+    width: 100%; border: none;
+    min-height: calc(100vh - 52px);
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════ HOME ══════════════════════════════ -->
+<div class="page active" id="page-home">
+  <div class="home-wrap">
+    <div class="home-eyebrow">Huuuge Games · Promo Tools</div>
+    <h1 class="home-title">Pick a tool<br/>to get started</h1>
+    <p class="home-sub">Internal tools for writing Asana task descriptions, managing subtasks, and more.</p>
+
+    <div class="cards-grid">
+
+      <a class="tool-card" onclick="openTool('task-desc'); return false;" href="#">
+        <div class="card-tag tag-blue">✦ Asana</div>
+        <div class="card-name">Task description generator</div>
+        <div class="card-desc">Fill in the key details and generate a formatted description — then push it directly to any Asana task.</div>
+        <div class="card-arrow">Open tool <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></div>
+      </a>
+
+      <a class="tool-card" onclick="openTool('subtask'); return false;" href="#">
+        <div class="card-tag tag-green">✦ Asana</div>
+        <div class="card-name">Subtask manager</div>
+        <div class="card-desc">Automatically assign subtasks to the right projects with correct due dates in one click.</div>
+        <div class="card-arrow">Open tool <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></div>
+      </a>
+
+      <a class="tool-card card-soon" href="#">
+        <div class="soon-badge">Coming soon</div>
+        <div class="card-tag tag-amber">✦ Promo</div>
+        <div class="card-name">More tools</div>
+        <div class="card-desc">Additional tools will appear here as they're built.</div>
+        <div class="card-arrow">Open tool <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></div>
+      </a>
+
+    </div>
+
+    <div class="home-footer">Built for Huuuge Games Promo Calendar team</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ TASK DESCRIPTION ══════════════════════════════ -->
+<div class="page" id="page-task-desc">
+  <div class="tool-header">
+    <button class="back-btn" onclick="goHome()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 4L6 8l4 4"/></svg>
+      All tools
+    </button>
+    <div class="header-divider"></div>
+    <span class="header-tool-name">Task description generator</span>
+    <span class="header-tag tag-blue" style="margin-left:auto; font-size:11px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; padding:3px 10px; border-radius:99px; background:var(--accent-blue-bg); color:var(--accent-blue);">Asana</span>
+  </div>
+
+  <div class="tool-body">
+    <h2 class="tool-title">Task description generator</h2>
+    <p class="tool-desc">Generate a structured description and push it directly to an Asana task.</p>
+
+    <!-- Task ID -->
+    <div class="form-grid">
+      <div class="field form-full">
+        <label>Asana task ID</label>
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="td-taskid" placeholder="e.g. 1215083565304512" style="flex:1;" />
+          <button class="btn-secondary" onclick="lookupTask()" style="white-space:nowrap; padding:9px 16px; font-size:13px;">Look up task</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Task type</label>
+        <select id="td-type">
+          <option value="">Select type...</option>
+          <option>Sale</option><option>Big Sale</option><option>Promos/Challenges</option>
+          <option>Features</option><option>VIP</option><option>Club Events</option>
+          <option>Info Banner</option><option>Config</option><option>Liveops</option>
+          <option>CRM Communication</option><option>Reward</option><option>Community</option>
+          <option>Offers</option><option>Monetization promos</option><option>BA Analysis</option>
+          <option>Web Shop</option><option>Placements</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Duration</label>
+        <input type="text" id="td-duration" placeholder="e.g. 17/06 7AM UTC – 01/07 7AM UTC" />
+      </div>
+      <div class="field form-full">
+        <label>General info / context</label>
+        <div class="rte" id="rte-general">
+          <div class="rte-bar">
+            <button class="rte-btn" data-cmd="bold"><b>B</b></button>
+            <button class="rte-btn" data-cmd="italic"><i>I</i></button>
+            <button class="rte-btn" data-cmd="underline"><u>U</u></button>
+            <div class="rte-sep"></div>
+            <button class="rte-btn" data-cmd="insertUnorderedList">• —</button>
+            <button class="rte-btn" data-cmd="insertOrderedList">1.</button>
+          </div>
+          <div class="rte-area" contenteditable="true" id="td-general"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Section toggles -->
+    <div style="font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-2); margin-bottom:10px;">Sections to include</div>
+    <div class="toggle-row">
+      <div class="toggle on" data-sec="economy">Economy</div>
+      <div class="toggle on" data-sec="artcopy">Art / Copy</div>
+      <div class="toggle on" data-sec="ba">BA</div>
+      <div class="toggle on" data-sec="ops">OPS</div>
+      <div class="toggle" data-sec="ec">EC</div>
+      <div class="toggle" data-sec="vip">VIP</div>
+      <div class="toggle" data-sec="dotcom">Dotcom / WS</div>
+    </div>
+
+    <!-- Economy -->
+    <div class="section-block" id="sec-economy">
+      <div class="section-block-head">Economy details</div>
+      <div class="field">
+        <textarea id="td-economy" placeholder="Rewards, offer type, chip amounts, pack details..."></textarea>
+      </div>
+    </div>
+
+    <!-- Art/Copy -->
+    <div class="section-block" id="sec-artcopy">
+      <div class="section-block-head">Art / Copy details</div>
+      <div class="field" style="margin-bottom:14px;">
+        <label>Art flag</label>
+        <div class="flag-row">
+          <div class="flag on" data-flag="Re-run">Re-run</div>
+          <div class="flag" data-flag="New Design">New Design</div>
+          <div class="flag" data-flag="New Campaign">New Campaign</div>
+          <div class="flag" data-flag="Reskin Assets">Reskin Assets</div>
+          <div class="flag" data-flag="Can be reuse">Can be reuse</div>
+          <div class="flag" data-flag="No need">No need</div>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Leading theme</label>
+          <input type="text" id="td-theme" placeholder="e.g. Generic / Loyalty / Summer" />
+        </div>
+        <div class="field">
+          <label>Number of versions</label>
+          <input type="text" id="td-versions" placeholder="e.g. 2 (Platinum / Diamond)" />
+        </div>
+        <div class="field">
+          <label>TnC</label>
+          <input type="text" id="td-tnc" placeholder="e.g. Promo ends June 30 11PM PDT" />
+        </div>
+        <div class="field">
+          <label>References</label>
+          <textarea id="td-refs" placeholder="Asana task links..." style="min-height:54px;"></textarea>
+        </div>
+        <div class="field form-full">
+          <label>Message to copywriter</label>
+          <div class="rte">
+            <div class="rte-bar">
+              <button class="rte-btn" data-cmd="bold"><b>B</b></button>
+              <button class="rte-btn" data-cmd="italic"><i>I</i></button>
+              <button class="rte-btn" data-cmd="underline"><u>U</u></button>
+              <div class="rte-sep"></div>
+              <button class="rte-btn" data-cmd="insertUnorderedList">• —</button>
+              <button class="rte-btn" data-cmd="insertOrderedList">1.</button>
+            </div>
+            <div class="rte-area" contenteditable="true" id="td-copy-msg"></div>
+          </div>
+        </div>
+        <div class="field form-full">
+          <label>Banners</label>
+          <div class="banner-list" id="td-banners"></div>
+          <button class="add-btn" onclick="addBanner()">+ Add banner</button>
+        </div>
+        <div class="field form-full">
+          <label>Additional art/copy notes</label>
+          <div class="rte">
+            <div class="rte-bar">
+              <button class="rte-btn" data-cmd="bold"><b>B</b></button>
+              <button class="rte-btn" data-cmd="italic"><i>I</i></button>
+              <button class="rte-btn" data-cmd="underline"><u>U</u></button>
+              <div class="rte-sep"></div>
+              <button class="rte-btn" data-cmd="insertUnorderedList">• —</button>
+              <button class="rte-btn" data-cmd="insertOrderedList">1.</button>
+            </div>
+            <div class="rte-area" contenteditable="true" id="td-art-notes"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPS -->
+    <div class="section-block" id="sec-ops">
+      <div class="section-block-head">OPS details</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Segmentation</label>
+          <input type="text" id="td-seg" placeholder="e.g. Platinum + Diamond players" />
+        </div>
+        <div class="field">
+          <label>Promo type</label>
+          <input type="text" id="td-promotype" placeholder="e.g. Manual / Automated" />
+        </div>
+        <div class="field form-full">
+          <label>Additional OPS notes</label>
+          <div class="rte">
+            <div class="rte-bar">
+              <button class="rte-btn" data-cmd="bold"><b>B</b></button>
+              <button class="rte-btn" data-cmd="italic"><i>I</i></button>
+              <button class="rte-btn" data-cmd="underline"><u>U</u></button>
+              <div class="rte-sep"></div>
+              <button class="rte-btn" data-cmd="insertUnorderedList">• —</button>
+              <button class="rte-btn" data-cmd="insertOrderedList">1.</button>
+            </div>
+            <div class="rte-area" contenteditable="true" id="td-ops-notes"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button class="btn-primary" onclick="generateDesc()">✦ Generate &amp; push to Asana</button>
+    </div>
+    <div class="status" id="td-status"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SUBTASK MANAGER ══════════════════════════════ -->
+<div class="page" id="page-subtask">
+  <div class="tool-header">
+    <button class="back-btn" onclick="goHome()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 4L6 8l4 4"/></svg>
+      All tools
+    </button>
+    <div class="header-divider"></div>
+    <span class="header-tool-name">Subtask manager</span>
+    <span class="header-tag" style="margin-left:auto; font-size:11px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; padding:3px 10px; border-radius:99px; background:var(--accent-green-bg); color:var(--accent-green);">Asana</span>
+  </div>
+  <div class="subtask-iframe-wrap">
+    <iframe id="subtask-iframe" src="" title="Subtask Manager"></iframe>
+  </div>
+</div>
+
+<script>
+// ── NAVIGATION ──
+function openTool(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'subtask') {
+    const iframe = document.getElementById('subtask-iframe');
+    if (!iframe.src) {
+      iframe.src = 'https://adimichnowski-tal-ux.github.io/subtask-manager/asana-subtask-manager_3.html';
+    }
+  }
+}
+function goHome() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-home').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── TOGGLES ──
+document.querySelectorAll('.toggle').forEach(t => {
+  t.addEventListener('click', () => {
+    t.classList.toggle('on');
+    const sec = document.getElementById('sec-' + t.dataset.sec);
+    if (sec) sec.style.display = t.classList.contains('on') ? 'block' : 'none';
+  });
+});
+
+// ── FLAGS ──
+document.querySelectorAll('.flag').forEach(f => {
+  f.addEventListener('click', () => {
+    document.querySelectorAll('.flag').forEach(x => x.classList.remove('on'));
+    f.classList.add('on');
+  });
+});
+
+// ── RICH TEXT ──
+document.querySelectorAll('.rte-bar').forEach(bar => {
+  bar.querySelectorAll('.rte-btn[data-cmd]').forEach(btn => {
+    btn.addEventListener('mousedown', e => {
+      e.preventDefault();
+      document.execCommand(btn.dataset.cmd, false, null);
+      const area = bar.nextElementSibling;
+      if (area) area.focus();
+    });
+  });
+});
+
+function rteText(el) {
+  if (!el) return '';
+  let out = '';
+  el.childNodes.forEach(n => {
+    if (n.nodeType === 3) out += n.textContent;
+    else if (n.nodeName === 'BR') out += '\n';
+    else if (n.nodeName === 'UL' || n.nodeName === 'OL') {
+      n.querySelectorAll('li').forEach((li, i) => {
+        out += (n.nodeName === 'OL' ? (i+1)+'. ' : '• ') + li.textContent + '\n';
+      });
+    } else if (n.nodeName === 'DIV' || n.nodeName === 'P') {
+      out += rteText(n) + '\n';
+    } else out += rteText(n);
+  });
+  return out.trim();
+}
+
+// ── BANNERS ──
+let bannerCount = 0;
+function addBanner() {
+  bannerCount++;
+  const n = bannerCount;
+  const div = document.createElement('div');
+  div.className = 'banner-card';
+  div.innerHTML = `<div class="banner-card-head"><span class="banner-num">Banner ${n}</span><button class="banner-remove" onclick="this.closest('.banner-card').remove()">✕</button></div><div class="banner-fields"><div class="field"><label>Name / type</label><input type="text" class="b-name" placeholder="e.g. ANN, PC Banner" /></div><div class="field"><label>Versions / segments</label><input type="text" class="b-ver" placeholder="e.g. 2 - Platinum / Diamond" /></div><div class="field form-full" style="grid-column:1/-1"><label>Instructions</label><textarea class="b-desc" placeholder="Design notes, messages, CTAs..." style="min-height:54px;"></textarea></div></div>`;
+  document.getElementById('td-banners').appendChild(div);
+}
+
+// ── TASK LOOKUP ──
+function lookupTask() {
+  const id = document.getElementById('td-taskid').value.trim();
+  if (!id) { alert('Please enter a task ID.'); return; }
+  const s = document.getElementById('td-status');
+  s.className = 'status info';
+  s.textContent = 'Looking up task ' + id + '...';
+  window.parent && window.parent.postMessage({ type: 'sendPrompt', text: 'Look up Asana task ID ' + id + ' and show me its name, due date, and project — just a quick confirmation, no action needed.' }, '*');
+  if (typeof sendPrompt === 'function') sendPrompt('Look up Asana task ID ' + id + ' and show me its name, due date, and project — just a quick confirmation, no action needed.');
+}
+
+// ── GENERATE ──
+function generateDesc() {
+  const taskId = document.getElementById('td-taskid').value.trim();
+  const taskType = document.getElementById('td-type').value;
+  const duration = document.getElementById('td-duration').value.trim();
+  const generalInfo = rteText(document.getElementById('td-general'));
+  const artFlag = document.querySelector('.flag.on')?.dataset.flag || 'Re-run';
+  const theme = document.getElementById('td-theme').value.trim();
+  const versions = document.getElementById('td-versions').value.trim();
+  const tnc = document.getElementById('td-tnc').value.trim();
+  const refs = document.getElementById('td-refs').value.trim();
+  const copyMsg = rteText(document.getElementById('td-copy-msg'));
+  const artNotes = rteText(document.getElementById('td-art-notes'));
+  const economy = document.getElementById('td-economy').value.trim();
+  const seg = document.getElementById('td-seg').value.trim();
+  const promoType = document.getElementById('td-promotype').value.trim();
+  const opsNotes = rteText(document.getElementById('td-ops-notes'));
+  const sections = [...document.querySelectorAll('.toggle.on')].map(t => t.dataset.sec);
+
+  const banners = [...document.querySelectorAll('.banner-card')].map(b => ({
+    name: b.querySelector('.b-name').value.trim(),
+    ver: b.querySelector('.b-ver').value.trim(),
+    desc: b.querySelector('.b-desc').value.trim()
+  })).filter(b => b.name || b.desc);
+
+  const bannerBlock = banners.length
+    ? '\nBanners:\n' + banners.map((b,i) => `    Banner ${i+1}${b.name?' - '+b.name:''}${b.ver?' ('+b.ver+')':''}:\n        ${b.desc||'TBD'}`).join('\n')
+    : '';
+
+  const prompt = `Generate an Asana task description for a promo calendar task at Huuuge Games.
+
+FORMAT RULES:
+- Always include ALL sections in this order: General Info, Economy, Art/Copy, BA, OPS, plus any extras requested
+- Section separator: use a blank line with --- on its own line between sections (Asana renders this as a divider)
+- Bold section headers
+- Use actual bullet points inside sections
+- Terse operational tone
+- Preserve all user content verbatim
+
+SECTIONS TO INCLUDE: ${sections.join(', ')} (always include General Info)
+
+INPUT:
+Task type: ${taskType || 'not specified'}
+Duration: ${duration || 'TBD'}
+General info: ${generalInfo || 'TBD'}
+Economy: ${economy || 'TBD'}
+Art flag: ${artFlag}
+Leading theme: ${theme || 'TBD'}
+Number of versions: ${versions || 'TBD'}
+TnC: ${tnc || 'TBD'}
+Message to copywriter: ${copyMsg || 'TBD'}${bannerBlock}
+Art notes: ${artNotes || 'none'}
+References: ${refs || 'none'}
+OPS promo type: ${promoType || 'TBD'}
+OPS segmentation: ${seg || 'TBD'}
+OPS notes: ${opsNotes || 'none'}
+
+Push the result to Asana task ${taskId || '[no task ID provided]'} using html_notes with <strong> headers, <ul> bullets, and <hr/> dividers.`;
+
+  const s = document.getElementById('td-status');
+  s.className = 'status info';
+  s.textContent = taskId ? 'Generating and pushing to Asana task ' + taskId + '...' : 'Generating description...';
+
+  if (typeof sendPrompt === 'function') sendPrompt(prompt);
+}
+</script>
+</body>
+</html>
