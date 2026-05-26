@@ -275,6 +275,43 @@
   }
   .reset-btn:hover { color: var(--text); border-color: var(--border-strong); }
 
+
+  /* Confirmation modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-box {
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 20px; padding: 32px; width: 100%; max-width: 520px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+  .modal-icon { font-size: 28px; margin-bottom: 14px; }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+  .modal-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+  .conflict-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .conflict-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    background: var(--surface2); border-radius: 10px; padding: 10px 14px;
+    font-family: 'DM Mono', monospace; font-size: 12px;
+  }
+  .conflict-name { color: var(--text); flex: 1; min-width: 120px; }
+  .conflict-arrow { color: var(--muted); }
+  .conflict-dates { color: var(--text); }
+  .conflict-old { color: var(--muted); text-decoration: line-through; margin-right: 4px; }
+  .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-actions .cancel-row { grid-column: 1 / -1; }
+  .modal-btn {
+    padding: 12px; border-radius: 10px; font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+    transition: opacity 0.15s;
+  }
+  .modal-btn:hover { opacity: 0.85; }
+  .modal-btn.overwrite { background: var(--danger); color: #fff; }
+  .modal-btn.skip      { background: var(--surface2); color: var(--text); border: 1px solid var(--border-strong); }
+  .modal-btn.cancel    { background: transparent; color: var(--muted); border: 1px solid var(--border); width: 100%; }
+
   footer { margin-top: 48px; text-align: center; font-size: 12px; color: var(--muted); opacity: 0.5; }
 
   .error-banner {
@@ -406,6 +443,37 @@
       <button class="reset-btn" onclick="resetForm()">← Run another task</button>
     </div>
 
+  </div>
+
+  <!-- COMPLETED TASKS MODAL -->
+  <div class="modal-overlay" id="completedModal">
+    <div class="modal-box">
+      <div class="modal-icon">✅</div>
+      <div class="modal-title">Completed subtasks detected</div>
+      <div class="modal-subtitle">The following subtasks are already marked as <strong>completed</strong>.<br>Do you still want to update them?</div>
+      <div class="conflict-list" id="completedList"></div>
+      <div class="modal-actions">
+        <button class="modal-btn overwrite" id="completedYesBtn">Yes, update anyway</button>
+        <button class="modal-btn cancel" style="grid-column:unset" id="completedNoBtn">Cancel automation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+      <div class="modal-icon">⚠️</div>
+      <div class="modal-title">Existing due dates detected</div>
+      <div class="modal-subtitle">The following subtasks already have due dates.<br>What would you like to do?</div>
+      <div class="conflict-list" id="conflictList"></div>
+      <div class="modal-actions">
+        <button class="modal-btn overwrite" id="confirmYesBtn">Overwrite all</button>
+        <button class="modal-btn skip" id="confirmSkipBtn">Keep existing dates</button>
+        <div class="cancel-row">
+          <button class="modal-btn cancel" id="confirmCancelBtn">Cancel automation</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <footer>Powered by Asana API &nbsp;·&nbsp; Built for your workflow</footer>
@@ -593,10 +661,74 @@ function updateLine(line, msg, type) {
   line.querySelector(".log-text").innerHTML = msg;
 }
 
+function showCompletedModal(tasks) {
+  return new Promise(resolve => {
+    const modal = document.getElementById("completedModal");
+    const list  = document.getElementById("completedList");
+    list.innerHTML = tasks.map(t => {
+      const type = getSuffix(t.name);
+      const shortName = t.name.split(/[-–]/).pop().trim();
+      return `<div class="conflict-row">
+        <span class="tag ${type}">${type}</span>
+        <span class="conflict-name">${shortName}</span>
+        <span style="color:var(--success);font-size:11px;font-family:'DM Mono',monospace;">✓ completed</span>
+      </div>`;
+    }).join("");
+    modal.style.display = "flex";
+    document.getElementById("completedYesBtn").onclick  = () => { modal.style.display = "none"; resolve(true); };
+    document.getElementById("completedNoBtn").onclick   = () => { modal.style.display = "none"; resolve(false); };
+  });
+}
+
+// ── ASANA OPERATIONS ─────────────────────────────────────────────────────────
+// ── CONFIRMATION MODAL ───────────────────────────────────────────────
+function showConfirmModal(conflicts) {
+  return new Promise(resolve => {
+    const modal = document.getElementById("confirmModal");
+    const list  = document.getElementById("conflictList");
+    list.innerHTML = conflicts.map(c =>
+      `<div class="conflict-row">
+        <span class="tag ${c.type}">${c.type}</span>
+        <span class="conflict-name">${c.name}</span>
+        <span class="conflict-arrow">→</span>
+        <span class="conflict-dates"><span class="conflict-old">${c.existing}</span> → <strong>${c.newDate}</strong></span>
+      </div>`
+    ).join("");
+    modal.style.display = "flex";
+    document.getElementById("confirmYesBtn").onclick = () => { modal.style.display = "none"; resolve("all"); };
+    document.getElementById("confirmSkipBtn").onclick = () => { modal.style.display = "none"; resolve("skip"); };
+    document.getElementById("confirmCancelBtn").onclick = () => { modal.style.display = "none"; resolve("cancel"); };
+  });
+}
+
+function showCompletedModal(tasks) {
+  return new Promise(resolve => {
+    const modal = document.getElementById("completedModal");
+    const list  = document.getElementById("completedList");
+    list.innerHTML = tasks.map(t => {
+      const type = getSuffix(t.name);
+      const shortName = t.name.split(/[-–]/).pop().trim();
+      return `<div class="conflict-row">
+        <span class="tag ${type}">${type}</span>
+        <span class="conflict-name">${shortName}</span>
+        <span style="color:var(--success);font-size:11px;font-family:'DM Mono',monospace;">✓ completed</span>
+      </div>`;
+    }).join("");
+    modal.style.display = "flex";
+    document.getElementById("completedYesBtn").onclick  = () => { modal.style.display = "none"; resolve(true); };
+    document.getElementById("completedNoBtn").onclick   = () => { modal.style.display = "none"; resolve(false); };
+  });
+}
+
 // ── ASANA OPERATIONS ─────────────────────────────────────────────────────────
 async function getSubtasks(taskId) {
-  const data = await asanaGet(`/tasks/${taskId}?opt_fields=subtasks,subtasks.name,subtasks.gid`);
+  const data = await asanaGet(`/tasks/${taskId}?opt_fields=subtasks,subtasks.name,subtasks.gid,subtasks.due_on,subtasks.completed,subtasks.memberships,subtasks.memberships.project.gid`);
   return data.data.subtasks || [];
+}
+
+function getTaskProjectIds(task) {
+  if (!task.memberships) return new Set();
+  return new Set(task.memberships.map(m => m.project && m.project.gid).filter(Boolean));
 }
 
 async function addTaskToProject(taskGid, projectGid, sectionGid) {
@@ -618,11 +750,21 @@ async function updateSubtask(gid, projects, dueOn) {
 }
 
 function getSuffix(name) {
-  if (/[-–]\s*Art$/.test(name) || name === "Art")       return "art";
-  if (/[-–]\s*OPS$/.test(name) || name === "OPS")       return "ops";
-  if (/[-–]\s*Copy$/.test(name) || name === "Copy")     return "copy";
-  if (/[-–]\s*Config$/.test(name) || name === "Config") return "config";
+  const n = name.trim();
+  if (/[-–]\s*Art$/i.test(n)    || /^Art$/i.test(n))    return "art";
+  if (/[-–]\s*OPS$/i.test(n)    || /^OPS$/i.test(n))    return "ops";
+  if (/[-–]\s*Copy$/i.test(n)   || /^Copy$/i.test(n))   return "copy";
+  if (/[-–]\s*Config$/i.test(n) || /^Config$/i.test(n)) return "config";
   return null;
+}
+
+function getSkipReason(name) {
+  const n = name.trim();
+  // Extract whatever comes after the last dash as the "suffix"
+  const parts = n.split(/[-–]/);
+  const lastPart = parts[parts.length - 1].trim();
+  if (lastPart) return `suffix "<strong>${lastPart}</strong>" not in rules`;
+  return "no recognizable suffix";
 }
 
 // ── RUN ──────────────────────────────────────────────────────────────────────
@@ -667,21 +809,90 @@ async function run() {
       addLog(`Config due date: <strong>${dueConfig}</strong> (${DAY_NAMES[new Date(dueConfig).getDay()]}) — ${label}`, "wait");
     }
 
-    const matched = subtasks.filter(t => getSuffix(t.name));
-    const skipped = subtasks.length - matched.length;
-    if (skipped > 0) addLog(`Skipping ${skipped} subtask(s) — no matching suffix`, "wait");
+    const matched  = subtasks.filter(t => getSuffix(t.name));
+    const unmatched = subtasks.filter(t => !getSuffix(t.name));
+
+    // Point 3: Show skipped subtasks with reason
+    if (unmatched.length > 0) {
+      unmatched.forEach(t => {
+        addLog(`Skipping "<strong>${t.name.trim()}</strong>" — ${getSkipReason(t.name)}`, "wait");
+      });
+    }
+
+    // Point 2: Warn about completed subtasks
+    const completedMatched = matched.filter(t => t.completed);
+    let proceedWithCompleted = true;
+    if (completedMatched.length > 0) {
+      addLog(`⚠ ${completedMatched.length} matched subtask(s) are already completed — asking for confirmation…`, "warn");
+      proceedWithCompleted = await showCompletedModal(completedMatched);
+      if (!proceedWithCompleted) {
+        addLog("Automation cancelled.", "err");
+        document.getElementById("runBtn").disabled = false;
+        document.getElementById("spinner").style.display = "none";
+        document.getElementById("btnText").textContent = "Run automation";
+        return;
+      }
+    }
+
+    // Point 1: Check if already in project
+    const alreadyInProject = {};
+    matched.forEach(t => {
+      const existingProjects = getTaskProjectIds(t);
+      const type = getSuffix(t.name);
+      const targetProjects = RULES[type];
+      const alreadyIn = targetProjects.filter(p => existingProjects.has(p.project));
+      if (alreadyIn.length > 0) alreadyInProject[t.gid] = alreadyIn.map(p => p.project);
+    });
+
+    // Point 3 (due date): Check for existing due dates that would be overwritten
+    const conflicts = matched.filter(t => {
+      const type = getSuffix(t.name);
+      const due  = dueDateMap[type];
+      return due && t.due_on && t.due_on !== due;
+    }).map(t => ({
+      gid: t.gid,
+      type: getSuffix(t.name),
+      name: t.name.split(/[-–]/).pop().trim(),
+      existing: t.due_on,
+      newDate: dueDateMap[getSuffix(t.name)]
+    }));
+
+    let overwriteDecision = "all";
+    if (conflicts.length > 0) {
+      addLog(`⚠ ${conflicts.length} subtask(s) already have due dates — asking for confirmation…`, "warn");
+      overwriteDecision = await showConfirmModal(conflicts);
+      if (overwriteDecision === "cancel") {
+        addLog("Automation cancelled.", "err");
+        document.getElementById("runBtn").disabled = false;
+        document.getElementById("spinner").style.display = "none";
+        document.getElementById("btnText").textContent = "Run automation";
+        return;
+      }
+    }
+
+    const skipDueDateGids = overwriteDecision === "skip" ? new Set(conflicts.map(c => c.gid)) : new Set();
 
     for (const t of matched) {
       const type      = getSuffix(t.name);
       const shortName = t.name.split(/[-–]/).pop().trim();
       const due       = dueDateMap[type];
       const projects  = RULES[type];
-      const dueLabel  = due ? ` + due ${due}` : "";
+
+      const effectiveDue = skipDueDateGids.has(t.gid) ? null : due;
+      const dueLabel     = effectiveDue ? ` + due ${effectiveDue}` : "";
+      const skipDueNote  = skipDueDateGids.has(t.gid) ? ` <span style="color:var(--muted)">(kept existing date ${t.due_on})</span>` : "";
+
+      // Filter out projects the task is already in
+      const alreadyIn    = alreadyInProject[t.gid] || [];
+      const newProjects  = projects.filter(p => !alreadyIn.includes(p.project));
+      const alreadyNote  = alreadyIn.length > 0
+        ? ` <span style="color:var(--muted)">(already in ${alreadyIn.length} project${alreadyIn.length > 1 ? "s" : ""})</span>`
+        : "";
 
       const line = addLog(`<span class="tag ${type}">${type}</span> ${shortName}…`);
       try {
-        await updateSubtask(t.gid, projects, due);
-        updateLine(line, `<span class="tag ${type}">${type}</span> ${shortName} — done${dueLabel}`, "ok");
+        await updateSubtask(t.gid, newProjects, effectiveDue);
+        updateLine(line, `<span class="tag ${type}">${type}</span> ${shortName} — done${dueLabel}${skipDueNote}${alreadyNote}`, "ok");
         counts[type]++;
       } catch(e) {
         updateLine(line, `<span class="tag ${type}">${type}</span> ${shortName} — failed: ${e.message}`, "err");
