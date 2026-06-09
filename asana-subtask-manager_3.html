@@ -7,330 +7,190 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #0b0c0e;
-    --surface: #13151a;
-    --surface2: #1c1f27;
-    --border: rgba(255,255,255,0.07);
-    --border-strong: rgba(255,255,255,0.14);
-    --text: #f0f0ee;
-    --muted: #7a7d86;
-    --art: #e8c86a;
-    --art-bg: rgba(232,200,106,0.1);
-    --art-border: rgba(232,200,106,0.25);
-    --ops: #6ab8e8;
-    --ops-bg: rgba(106,184,232,0.1);
-    --ops-border: rgba(106,184,232,0.25);
-    --copy: #b06ae8;
-    --copy-bg: rgba(176,106,232,0.1);
-    --copy-border: rgba(176,106,232,0.25);
-    --config: #e86a9b;
-    --config-bg: rgba(232,106,155,0.1);
-    --config-border: rgba(232,106,155,0.25);
-    --success: #6ae8a0;
-    --success-bg: rgba(106,232,160,0.08);
-    --danger: #e87a6a;
-    --warn: #e8b46a;
-    --warn-bg: rgba(232,180,106,0.08);
-    --accent: #9b8cff;
+    --bg: #0b0c0e; --surface: #13151a; --surface2: #1c1f27;
+    --border: rgba(255,255,255,0.07); --border-strong: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7d86;
+    --art: #e8c86a; --art-bg: rgba(232,200,106,0.1); --art-border: rgba(232,200,106,0.25);
+    --ops: #6ab8e8; --ops-bg: rgba(106,184,232,0.1); --ops-border: rgba(106,184,232,0.25);
+    --copy: #b06ae8; --copy-bg: rgba(176,106,232,0.1); --copy-border: rgba(176,106,232,0.25);
+    --config: #e86a9b; --config-bg: rgba(232,106,155,0.1); --config-border: rgba(232,106,155,0.25);
+    --success: #6ae8a0; --success-bg: rgba(106,232,160,0.08);
+    --danger: #e87a6a; --warn: #e8b46a; --warn-bg: rgba(232,180,106,0.08); --accent: #9b8cff;
   }
-
   body {
-    font-family: 'Syne', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 60px 20px 80px;
-    position: relative;
-    overflow-x: hidden;
+    font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+    padding: 60px 20px 80px; position: relative; overflow-x: hidden;
   }
-
   body::before {
-    content: '';
-    position: fixed;
-    top: -200px; left: 50%;
-    transform: translateX(-50%);
+    content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
     width: 700px; height: 400px;
     background: radial-gradient(ellipse, rgba(155,140,255,0.08) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
+    pointer-events: none; z-index: 0;
   }
-
-  .wrapper { width: 100%; max-width: 600px; position: relative; z-index: 1; }
-
+  .wrapper { width: 100%; max-width: 620px; position: relative; z-index: 1; }
   header { margin-bottom: 48px; text-align: center; }
-
   .logo-mark {
     display: inline-flex; align-items: center; justify-content: center;
     width: 44px; height: 44px; background: var(--surface2);
-    border: 1px solid var(--border-strong); border-radius: 12px;
-    margin-bottom: 20px; font-size: 20px;
+    border: 1px solid var(--border-strong); border-radius: 12px; margin-bottom: 20px; font-size: 20px;
   }
-
-  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); margin-bottom: 8px; }
-  .subtitle { font-size: 14px; color: var(--muted); font-weight: 400; line-height: 1.6; }
-
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 16px; padding: 28px; margin-bottom: 16px;
-    transition: border-color 0.2s;
-  }
+  h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .subtitle { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; margin-bottom: 16px; transition: border-color 0.2s; }
   .card:focus-within { border-color: var(--border-strong); }
-
   .card-label {
     font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 20px;
-    display: flex; align-items: center; gap: 8px;
+    color: var(--muted); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
   }
   .card-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-  .dates-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-
-  .field { margin-bottom: 18px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { margin-bottom: 16px; }
   .field:last-child { margin-bottom: 0; }
-  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.02em; }
-
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
+  .field .hint { font-size: 11px; color: var(--muted); opacity: 0.7; margin-top: 6px; font-family: 'DM Mono', monospace; }
   .label-tag {
-    display: inline-block; font-size: 10px; font-weight: 600;
-    padding: 1px 6px; border-radius: 4px; letter-spacing: 0.05em;
-    text-transform: uppercase; margin-left: 5px; vertical-align: 1px;
+    display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px;
+    border-radius: 4px; letter-spacing: 0.05em; text-transform: uppercase; margin-left: 5px; vertical-align: 1px;
   }
   .label-tag.art    { background: var(--art-bg);    color: var(--art);    border: 1px solid var(--art-border); }
   .label-tag.ops    { background: var(--ops-bg);    color: var(--ops);    border: 1px solid var(--ops-border); }
   .label-tag.copy   { background: var(--copy-bg);   color: var(--copy);   border: 1px solid var(--copy-border); }
   .label-tag.config { background: var(--config-bg); color: var(--config); border: 1px solid var(--config-border); }
-
   .field input {
     width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 14px;
-    font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text);
-    outline: none; transition: border-color 0.2s, background 0.2s; -webkit-appearance: none;
+    border-radius: 10px; padding: 12px 14px; font-family: 'DM Mono', monospace;
+    font-size: 14px; color: var(--text); outline: none;
+    transition: border-color 0.2s, background 0.2s; -webkit-appearance: none;
   }
   .field input:focus { border-color: var(--accent); background: rgba(155,140,255,0.05); }
   .field input::placeholder { color: var(--muted); opacity: 0.5; }
   input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
-
+  .optional-badge {
+    display: inline-block; font-size: 9px; font-weight: 500; padding: 1px 5px;
+    border-radius: 4px; background: var(--surface2); color: var(--muted);
+    border: 1px solid var(--border); margin-left: 6px; vertical-align: 2px; letter-spacing: 0.04em;
+  }
   .config-preview {
     display: none; align-items: center; gap: 8px; margin-top: 8px;
-    font-family: 'DM Mono', monospace; font-size: 12px;
-    padding: 8px 12px; border-radius: 8px; border: 1px solid;
+    font-family: 'DM Mono', monospace; font-size: 12px; padding: 8px 12px;
+    border-radius: 8px; border: 1px solid;
   }
-  .config-preview.normal  { background: var(--config-bg); border-color: var(--config-border); color: var(--config); }
+  .config-preview.normal   { background: var(--config-bg); border-color: var(--config-border); color: var(--config); }
   .config-preview.adjusted { background: var(--warn-bg); border-color: rgba(232,180,106,0.25); color: var(--warn); }
-  .config-preview .preview-icon { font-size: 14px; flex-shrink: 0; }
-
   .shared-date-note {
     display: flex; align-items: center; gap: 8px;
     background: rgba(232,200,106,0.06); border: 1px solid rgba(232,200,106,0.15);
     border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--muted);
-    font-family: 'DM Mono', monospace; margin-top: -6px; margin-bottom: 8px;
+    font-family: 'DM Mono', monospace; margin-top: -4px; margin-bottom: 10px;
   }
   .shared-date-note .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
   .shared-date-note .dot.art { background: var(--art); }
   .shared-date-note .dot.ops { background: var(--ops); }
-
   .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
   .rule-chip { border-radius: 10px; padding: 12px 14px; border: 1px solid; display: flex; flex-direction: column; gap: 5px; }
   .rule-chip.art    { background: var(--art-bg);    border-color: var(--art-border); }
   .rule-chip.ops    { background: var(--ops-bg);    border-color: var(--ops-border); }
   .rule-chip.copy   { background: var(--copy-bg);   border-color: var(--copy-border); }
   .rule-chip.config { background: var(--config-bg); border-color: var(--config-border); }
-
   .rule-chip .chip-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
   .rule-chip.art    .chip-label { color: var(--art); }
   .rule-chip.ops    .chip-label { color: var(--ops); }
   .rule-chip.copy   .chip-label { color: var(--copy); }
   .rule-chip.config .chip-label { color: var(--config); }
   .rule-chip .chip-desc { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; line-height: 1.6; }
-
-  /* Login screen */
+  /* Login */
   #loginArea { text-align: center; }
-
-  .login-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 16px; padding: 40px 28px; margin-bottom: 16px;
-  }
-
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 28px; margin-bottom: 16px; }
   .login-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
   .login-card p { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
-
   .asana-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-    padding: 14px 28px; background: #F06A6A; color: #fff;
-    border: none; border-radius: 12px; font-family: 'Syne', sans-serif;
-    font-size: 15px; font-weight: 700; cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.02em;
-    text-decoration: none;
+    padding: 14px 28px; background: #F06A6A; color: #fff; border: none; border-radius: 12px;
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.15s; text-decoration: none;
   }
   .asana-btn:hover { opacity: 0.9; }
-  .asana-btn:active { transform: scale(0.99); }
-
   .asana-logo { width: 20px; height: 20px; }
-
+  .error-banner { background: rgba(232,122,106,0.08); border: 1px solid rgba(232,122,106,0.25); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: var(--danger); margin-bottom: 16px; line-height: 1.6; font-family: 'DM Mono', monospace; }
   /* User bar */
-  .user-bar {
-    display: none; align-items: center; justify-content: space-between;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;
-    font-size: 13px;
-  }
-  .user-bar .user-info { display: flex; align-items: center; gap: 10px; }
-  .user-avatar {
-    width: 30px; height: 30px; border-radius: 50%;
-    background: var(--accent); display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
-  }
-  .user-name { font-weight: 600; color: var(--text); }
+  .user-bar { display: none; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; }
+  .user-info { display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .user-name { font-weight: 600; }
   .user-email { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
-  .logout-btn {
-    background: transparent; border: 1px solid var(--border); border-radius: 8px;
-    padding: 6px 12px; font-family: 'Syne', sans-serif; font-size: 12px;
-    color: var(--muted); cursor: pointer; transition: color 0.15s, border-color 0.15s;
-  }
+  .logout-btn { background: transparent; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-family: 'Syne', sans-serif; font-size: 12px; color: var(--muted); cursor: pointer; transition: color 0.15s, border-color 0.15s; }
   .logout-btn:hover { color: var(--text); border-color: var(--border-strong); }
-
+  /* Run button */
   .run-btn {
-    width: 100%; padding: 15px; background: var(--text); color: var(--bg);
-    border: none; border-radius: 12px; font-family: 'Syne', sans-serif;
-    font-size: 15px; font-weight: 700; cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    margin-top: 8px; letter-spacing: 0.02em;
+    width: 100%; padding: 15px; background: var(--text); color: var(--bg); border: none;
+    border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px;
   }
   .run-btn:hover { opacity: 0.9; }
   .run-btn:active { transform: scale(0.99); }
   .run-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-
-  .spinner {
-    width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.2);
-    border-top-color: var(--bg); border-radius: 50%;
-    animation: spin 0.7s linear infinite; display: none;
-  }
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.2); border-top-color: var(--bg); border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
+  /* Results */
   #resultsArea { display: none; }
-
   .summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-
   .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
   .stat .num { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
-  .stat.art    .num { color: var(--art); }
-  .stat.ops    .num { color: var(--ops); }
-  .stat.copy   .num { color: var(--copy); }
-  .stat.config .num { color: var(--config); }
-  .stat .lbl { font-size: 11px; color: var(--muted); font-weight: 400; }
-
+  .stat.art .num { color: var(--art); } .stat.ops .num { color: var(--ops); }
+  .stat.copy .num { color: var(--copy); } .stat.config .num { color: var(--config); }
+  .stat .lbl { font-size: 11px; color: var(--muted); }
   .log-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
-
-  .log-entries {
-    display: flex; flex-direction: column; gap: 6px;
-    max-height: 360px; overflow-y: auto; padding-right: 4px;
-  }
+  .log-entries { display: flex; flex-direction: column; gap: 4px; max-height: 400px; overflow-y: auto; padding-right: 4px; }
   .log-entries::-webkit-scrollbar { width: 4px; }
-  .log-entries::-webkit-scrollbar-track { background: transparent; }
   .log-entries::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
-
-  .log-line {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.5;
-    padding: 6px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.2s ease;
-  }
+  .log-line { display: flex; align-items: flex-start; gap: 10px; font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.6; padding: 5px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.2s ease; }
   .log-line:last-child { border-bottom: none; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-
-  .log-icon { font-size: 13px; margin-top: 1px; flex-shrink: 0; min-width: 14px; }
-  .log-icon.ok   { color: var(--success); }
-  .log-icon.err  { color: var(--danger); }
-  .log-icon.wait { color: var(--muted); }
-  .log-icon.warn { color: var(--warn); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .log-icon { font-size: 12px; margin-top: 2px; flex-shrink: 0; min-width: 14px; }
+  .log-icon.ok { color: var(--success); } .log-icon.err { color: var(--danger); }
+  .log-icon.wait { color: var(--muted); } .log-icon.warn { color: var(--warn); }
   .log-text { color: var(--text); flex: 1; }
-
-  .tag {
-    display: inline-block; font-size: 10px; font-weight: 600;
-    padding: 1px 7px; border-radius: 5px; letter-spacing: 0.05em;
-    text-transform: uppercase; vertical-align: 1px;
-  }
+  .log-reason { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 5px; letter-spacing: 0.05em; text-transform: uppercase; vertical-align: 1px; }
   .tag.art    { background: var(--art-bg);    color: var(--art);    border: 1px solid var(--art-border); }
   .tag.ops    { background: var(--ops-bg);    color: var(--ops);    border: 1px solid var(--ops-border); }
   .tag.copy   { background: var(--copy-bg);   color: var(--copy);   border: 1px solid var(--copy-border); }
   .tag.config { background: var(--config-bg); color: var(--config); border: 1px solid var(--config-border); }
-
-  .done-banner {
-    display: none; align-items: center; gap: 10px;
-    background: var(--success-bg); border: 1px solid rgba(106,232,160,0.2);
-    border-radius: 10px; padding: 12px 16px;
-    font-size: 13px; font-weight: 500; color: var(--success); margin-bottom: 16px;
-  }
-
-  .reset-btn {
-    width: 100%; padding: 12px; background: transparent; color: var(--muted);
-    border: 1px solid var(--border); border-radius: 10px;
-    font-family: 'Syne', sans-serif; font-size: 13px; cursor: pointer; margin-top: 12px;
-    transition: color 0.15s, border-color 0.15s;
-  }
+  .done-banner { display: none; align-items: center; gap: 10px; background: var(--success-bg); border: 1px solid rgba(106,232,160,0.2); border-radius: 10px; padding: 12px 16px; font-size: 13px; font-weight: 500; color: var(--success); margin-bottom: 16px; }
+  .reset-btn { width: 100%; padding: 12px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 13px; cursor: pointer; margin-top: 12px; transition: color 0.15s, border-color 0.15s; }
   .reset-btn:hover { color: var(--text); border-color: var(--border-strong); }
-
-
-  /* Confirmation modal */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0; z-index: 100;
-    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-    align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal-box {
-    background: var(--surface); border: 1px solid var(--border-strong);
-    border-radius: 20px; padding: 32px; width: 100%; max-width: 520px;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-  }
+  /* Modals */
+  .modal-overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px; }
+  .modal-box { background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 32px; width: 100%; max-width: 520px; box-shadow: 0 24px 80px rgba(0,0,0,0.5); }
   .modal-icon { font-size: 28px; margin-bottom: 14px; }
   .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
   .modal-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
-  .conflict-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
-  .conflict-row {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    background: var(--surface2); border-radius: 10px; padding: 10px 14px;
-    font-family: 'DM Mono', monospace; font-size: 12px;
-  }
-  .conflict-name { color: var(--text); flex: 1; min-width: 120px; }
-  .conflict-arrow { color: var(--muted); }
-  .conflict-dates { color: var(--text); }
+  .conflict-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; max-height: 240px; overflow-y: auto; }
+  .conflict-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--surface2); border-radius: 10px; padding: 10px 14px; font-family: 'DM Mono', monospace; font-size: 12px; }
+  .conflict-name { color: var(--text); flex: 1; min-width: 100px; }
   .conflict-old { color: var(--muted); text-decoration: line-through; margin-right: 4px; }
   .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .modal-actions .cancel-row { grid-column: 1 / -1; }
-  .modal-btn {
-    padding: 12px; border-radius: 10px; font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 600; cursor: pointer; border: none;
-    transition: opacity 0.15s;
-  }
+  .modal-actions .full { grid-column: 1 / -1; }
+  .modal-btn { padding: 12px; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; width: 100%; }
   .modal-btn:hover { opacity: 0.85; }
   .modal-btn.overwrite { background: var(--danger); color: #fff; }
-  .modal-btn.skip      { background: var(--surface2); color: var(--text); border: 1px solid var(--border-strong); }
-  .modal-btn.cancel    { background: transparent; color: var(--muted); border: 1px solid var(--border); width: 100%; }
-
+  .modal-btn.keep      { background: var(--surface2); color: var(--text); border: 1px solid var(--border-strong); }
+  .modal-btn.cancel    { background: transparent; color: var(--muted); border: 1px solid var(--border); }
   footer { margin-top: 48px; text-align: center; font-size: 12px; color: var(--muted); opacity: 0.5; }
-
-  .error-banner {
-    background: rgba(232,122,106,0.08); border: 1px solid rgba(232,122,106,0.25);
-    border-radius: 10px; padding: 14px 18px; font-size: 13px; color: var(--danger);
-    margin-bottom: 16px; line-height: 1.6; font-family: 'DM Mono', monospace;
-  }
 </style>
 </head>
 <body>
-
 <div class="wrapper">
   <header>
     <div class="logo-mark">⚡</div>
     <h1>Asana Subtask Manager</h1>
-    <p class="subtitle">Automatically assign subtasks to projects<br>with the right due dates.</p>
+    <p class="subtitle">Automatically assign subtasks to projects with the right due dates.</p>
   </header>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN -->
   <div id="loginArea">
     <div id="oauthError" class="error-banner" style="display:none;"></div>
     <div class="login-card">
@@ -347,9 +207,8 @@
     </div>
   </div>
 
-  <!-- MAIN APP -->
+  <!-- APP -->
   <div id="appArea" style="display:none;">
-
     <div class="user-bar" id="userBar">
       <div class="user-info">
         <div class="user-avatar" id="userAvatar">?</div>
@@ -362,6 +221,7 @@
     </div>
 
     <div id="formArea">
+      <!-- Task ID -->
       <div class="card">
         <div class="card-label">Task input</div>
         <div class="field">
@@ -370,9 +230,10 @@
         </div>
       </div>
 
+      <!-- Due dates -->
       <div class="card">
-        <div class="card-label">Due dates</div>
-        <div class="dates-grid">
+        <div class="card-label">Due dates <span class="optional-badge">all optional</span></div>
+        <div class="grid-2">
           <div class="field" style="grid-column: 1 / -1;">
             <label>Due date <span class="label-tag art">Art</span><span class="label-tag ops">OPS</span></label>
             <div class="shared-date-note">
@@ -389,17 +250,31 @@
             <label>Due date <span class="label-tag config">Config</span></label>
             <input type="date" id="dueConfig" oninput="updateConfigPreview()" />
             <div class="config-preview" id="configPreview">
-              <span class="preview-icon" id="configPreviewIcon"></span>
+              <span id="configPreviewIcon"></span>
               <span id="configPreviewText"></span>
             </div>
+            <div class="hint">Leave empty to auto-set to OPS −5 days (skips weekends → Thursday)</div>
           </div>
         </div>
-        <p style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:12px;line-height:1.6;">
-          * Config auto-sets to OPS −5 days if left empty.<br>
-          * If that date falls on Fri/Sat/Sun, it shifts back to the Thursday before.
-        </p>
       </div>
 
+      <!-- Assignees -->
+      <div class="card">
+        <div class="card-label">Assignees <span class="optional-badge">optional</span></div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Assignee <span class="label-tag copy">Copy</span></label>
+            <input type="text" id="assigneeCopy" placeholder="name or email" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label>Assignee <span class="label-tag config">Config</span></label>
+            <input type="text" id="assigneeConfig" placeholder="name or email (optional)" autocomplete="off" />
+          </div>
+        </div>
+        <div class="hint" style="margin-top:4px;">Art and OPS subtasks are not assigned. Use email for best accuracy.</div>
+      </div>
+
+      <!-- Rules -->
       <div class="card">
         <div class="card-label">Automation rules</div>
         <div class="rules-grid">
@@ -413,11 +288,11 @@
           </div>
           <div class="rule-chip copy">
             <span class="chip-label">— Copy</span>
-            <span class="chip-desc">→ Project<br>#1202805118467140<br>+ Copy due date</span>
+            <span class="chip-desc">→ Project<br>#1202805118467140<br>+ Copy due date<br>+ Copy assignee</span>
           </div>
           <div class="rule-chip config">
             <span class="chip-label">— Config</span>
-            <span class="chip-desc">→ HC Economy Team<br>&nbsp;&nbsp;↳ section: Calendar tasks<br>→ Project #1202681320802528<br>+ Config due date<br>&nbsp;&nbsp;(no Fri/Sat/Sun → Thu)</span>
+            <span class="chip-desc">→ HC Economy Team<br>&nbsp;&nbsp;↳ Calendar tasks section<br>→ Project #1202681320802528<br>+ Config due date<br>+ Config assignee (opt)</span>
           </div>
         </div>
       </div>
@@ -428,6 +303,7 @@
       </button>
     </div>
 
+    <!-- Results -->
     <div id="resultsArea">
       <div class="done-banner" id="doneBanner">✓ &nbsp;Automation complete</div>
       <div class="summary-row">
@@ -442,36 +318,33 @@
       </div>
       <button class="reset-btn" onclick="resetForm()">← Run another task</button>
     </div>
-
   </div>
 
-  <!-- COMPLETED TASKS MODAL -->
+  <!-- MODAL: Completed tasks warning -->
   <div class="modal-overlay" id="completedModal">
     <div class="modal-box">
       <div class="modal-icon">✅</div>
       <div class="modal-title">Completed subtasks detected</div>
-      <div class="modal-subtitle">The following subtasks are already marked as <strong>completed</strong>.<br>Do you still want to update them?</div>
+      <div class="modal-subtitle">The following subtasks are already <strong>completed</strong>. Update them anyway?</div>
       <div class="conflict-list" id="completedList"></div>
       <div class="modal-actions">
         <button class="modal-btn overwrite" id="completedYesBtn">Yes, update anyway</button>
-        <button class="modal-btn cancel" style="grid-column:unset" id="completedNoBtn">Cancel automation</button>
+        <button class="modal-btn cancel" id="completedNoBtn">Cancel automation</button>
       </div>
     </div>
   </div>
 
-  <!-- CONFIRMATION MODAL -->
+  <!-- MODAL: Due date overwrite warning -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
       <div class="modal-icon">⚠️</div>
       <div class="modal-title">Existing due dates detected</div>
-      <div class="modal-subtitle">The following subtasks already have due dates.<br>What would you like to do?</div>
+      <div class="modal-subtitle">These subtasks already have due dates. What would you like to do?</div>
       <div class="conflict-list" id="conflictList"></div>
       <div class="modal-actions">
         <button class="modal-btn overwrite" id="confirmYesBtn">Overwrite all</button>
-        <button class="modal-btn skip" id="confirmSkipBtn">Keep existing dates</button>
-        <div class="cancel-row">
-          <button class="modal-btn cancel" id="confirmCancelBtn">Cancel automation</button>
-        </div>
+        <button class="modal-btn keep" id="confirmSkipBtn">Keep existing dates</button>
+        <div class="full"><button class="modal-btn cancel" id="confirmCancelBtn">Cancel automation</button></div>
       </div>
     </div>
   </div>
@@ -480,12 +353,13 @@
 </div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────────────────────────
-const CLIENT_ID     = "1214940964091051";
-const REDIRECT_URI  = window.location.href.split("?")[0].split("#")[0];
-const ASANA_AUTH    = "https://app.asana.com/-/oauth_authorize";
-const ASANA_TOKEN   = "https://app.asana.com/-/oauth_token";
-const ASANA_API     = "https://app.asana.com/api/1.0";
+// ── CONFIG ───────────────────────────────────────────────────────────────────
+const CLIENT_ID    = "1214940964091051";
+const CLIENT_SECRET = "20d6386dcb65b65a8043630f2121f600";
+const REDIRECT_URI = window.location.href.split("?")[0].split("#")[0];
+const ASANA_AUTH   = "https://app.asana.com/-/oauth_authorize";
+const ASANA_TOKEN  = "https://app.asana.com/-/oauth_token";
+const ASANA_API    = "https://app.asana.com/api/1.0";
 
 const RULES = {
   art:    [{ project: "1202103624709698", section: null }],
@@ -499,225 +373,127 @@ const RULES = {
 
 const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
-// ── AUTH STATE ───────────────────────────────────────────────────────────────
+// ── AUTH ─────────────────────────────────────────────────────────────────────
 let accessToken = localStorage.getItem("asana_token") || null;
 
 function loginWithAsana() {
   const state = Math.random().toString(36).slice(2);
   sessionStorage.setItem("oauth_state", state);
-  const params = new URLSearchParams({
-    client_id:     CLIENT_ID,
-    redirect_uri:  REDIRECT_URI,
-    response_type: "code",
-    state
-  });
+  const params = new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code", state });
   window.location.href = `${ASANA_AUTH}?${params}`;
 }
 
 async function exchangeCode(code) {
-  // NOTE: In a real hosted deployment, this exchange should happen server-side
-  // to keep the client secret safe. For local/team use this is acceptable.
-  const CLIENT_SECRET = "20d6386dcb65b65a8043630f2121f600";
   const res = await fetch(ASANA_TOKEN, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type:    "authorization_code",
-      client_id:     CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      redirect_uri:  REDIRECT_URI,
-      code
-    })
+    body: new URLSearchParams({ grant_type: "authorization_code", client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, code })
   });
   const data = await res.json();
-  if (data.access_token) {
-    accessToken = data.access_token;
-    localStorage.setItem("asana_token", accessToken);
-    return true;
-  }
+  if (data.access_token) { accessToken = data.access_token; localStorage.setItem("asana_token", accessToken); return true; }
   return false;
 }
 
-async function asanaGet(path) {
-  const res = await fetch(`${ASANA_API}${path}`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-  if (res.status === 401) { logout(); throw new Error("Session expired. Please log in again."); }
-  return res.json();
-}
-
-async function asanaPost(path, body) {
-  const res = await fetch(`${ASANA_API}${path}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  if (res.status === 401) { logout(); throw new Error("Session expired. Please log in again."); }
-  return res.json();
-}
-
-async function asanaPut(path, body) {
-  const res = await fetch(`${ASANA_API}${path}`, {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  if (res.status === 401) { logout(); throw new Error("Session expired. Please log in again."); }
-  return res.json();
-}
-
 function logout() {
-  localStorage.removeItem("asana_token");
-  accessToken = null;
+  localStorage.removeItem("asana_token"); accessToken = null;
   document.getElementById("appArea").style.display = "none";
   document.getElementById("loginArea").style.display = "block";
   document.getElementById("userBar").style.display = "none";
 }
 
+async function asanaGet(path) {
+  const res = await fetch(`${ASANA_API}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (res.status === 401) { logout(); throw new Error("Session expired. Please log in again."); }
+  return res.json();
+}
+async function asanaPost(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (res.status === 401) { logout(); throw new Error("Session expired."); }
+  const data = await res.json();
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPut(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (res.status === 401) { logout(); throw new Error("Session expired."); }
+  const data = await res.json();
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+
 async function loadUser() {
   try {
     const data = await asanaGet("/users/me");
-    const user = data.data;
-    const initials = user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+    const u = data.data;
+    const initials = u.name.split(" ").map(n => n[0]).join("").slice(0,2).toUpperCase();
     document.getElementById("userAvatar").textContent = initials;
-    document.getElementById("userName").textContent   = user.name;
-    document.getElementById("userEmail").textContent  = user.email || "";
+    document.getElementById("userName").textContent   = u.name;
+    document.getElementById("userEmail").textContent  = u.email || "";
     document.getElementById("userBar").style.display  = "flex";
-  } catch(e) { /* silently fail */ }
+  } catch(e) {}
 }
 
 // ── DATE HELPERS ─────────────────────────────────────────────────────────────
 function subtractDays(dateStr, days) {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() - days);
-  return d.toISOString().split("T")[0];
+  const d = new Date(dateStr); d.setDate(d.getDate() - days); return d.toISOString().split("T")[0];
 }
-
 function avoidWeekend(dateStr) {
-  const d = new Date(dateStr);
-  const day = d.getDay();
+  const d = new Date(dateStr); const day = d.getDay();
   if (day === 5) d.setDate(d.getDate() - 2);
   if (day === 6) d.setDate(d.getDate() - 3);
   if (day === 0) d.setDate(d.getDate() - 4);
   return d.toISOString().split("T")[0];
 }
-
 function computeConfigDate(dueArtOps, manualConfig) {
   if (manualConfig) {
     const adjusted = avoidWeekend(manualConfig);
     return { date: adjusted, wasAdjusted: adjusted !== manualConfig, source: "manual", original: manualConfig };
   }
   if (dueArtOps) {
-    const minus5   = subtractDays(dueArtOps, 5);
+    const minus5 = subtractDays(dueArtOps, 5);
     const adjusted = avoidWeekend(minus5);
     return { date: adjusted, wasAdjusted: adjusted !== minus5, source: "auto", original: minus5 };
   }
   return null;
 }
-
 function updateConfigPreview() {
-  const dueArtOps    = document.getElementById("dueArtOps").value;
+  const dueArtOps = document.getElementById("dueArtOps").value;
   const manualConfig = document.getElementById("dueConfig").value;
-  const preview      = document.getElementById("configPreview");
-  const previewText  = document.getElementById("configPreviewText");
-  const previewIcon  = document.getElementById("configPreviewIcon");
-
+  const preview = document.getElementById("configPreview");
   if (!dueArtOps && !manualConfig) { preview.style.display = "none"; return; }
-
   const result = computeConfigDate(dueArtOps, manualConfig);
   if (!result) { preview.style.display = "none"; return; }
-
   preview.style.display = "flex";
-
   if (result.wasAdjusted) {
-    const originalDay = DAY_NAMES[new Date(result.original).getDay()];
     preview.className = "config-preview adjusted";
-    previewIcon.textContent = "⚠";
-    previewText.innerHTML = `${originalDay} → shifted to Thursday <strong>${result.date}</strong>`;
+    document.getElementById("configPreviewIcon").textContent = "⚠";
+    document.getElementById("configPreviewText").innerHTML = `${DAY_NAMES[new Date(result.original).getDay()]} → shifted to Thursday <strong>${result.date}</strong>`;
   } else {
     preview.className = "config-preview normal";
-    previewIcon.textContent = "✓";
+    document.getElementById("configPreviewIcon").textContent = "✓";
     const label = result.source === "auto" ? "auto: OPS −5 days → " : "";
-    previewText.innerHTML = `${label}<strong>${DAY_NAMES[new Date(result.date).getDay()]} ${result.date}</strong>`;
+    document.getElementById("configPreviewText").innerHTML = `${label}<strong>${DAY_NAMES[new Date(result.date).getDay()]} ${result.date}</strong>`;
   }
 }
 
-// ── LOGGING ──────────────────────────────────────────────────────────────────
-function addLog(msg, type = "wait") {
-  const el = document.getElementById("log");
-  const line = document.createElement("div");
-  line.className = "log-line";
-  const icons = { ok: "✓", err: "✗", wait: "·", warn: "⚠" };
-  line.innerHTML = `<span class="log-icon ${type}">${icons[type]}</span><span class="log-text">${msg}</span>`;
-  el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
-  return line;
+// ── SUFFIX MATCHING ───────────────────────────────────────────────────────────
+// Matches suffix after last dash, trimming spaces, case-insensitive
+// Valid: "- Art", "- Art ", "- art", "- ART", "Art", "art "
+function getSuffix(name) {
+  const n = name.trim();
+  // Check if the whole name (for standalone) or the part after last dash matches
+  const parts = n.split(/[-–]/);
+  const last = parts[parts.length - 1].trim().toLowerCase();
+  if (last === "art")    return "art";
+  if (last === "ops")    return "ops";
+  if (last === "copy")   return "copy";
+  if (last === "config") return "config";
+  return null;
 }
-
-function updateLine(line, msg, type) {
-  const icons = { ok: "✓", err: "✗", wait: "·", warn: "⚠" };
-  line.querySelector(".log-icon").className = `log-icon ${type}`;
-  line.querySelector(".log-icon").textContent = icons[type];
-  line.querySelector(".log-text").innerHTML = msg;
-}
-
-function showCompletedModal(tasks) {
-  return new Promise(resolve => {
-    const modal = document.getElementById("completedModal");
-    const list  = document.getElementById("completedList");
-    list.innerHTML = tasks.map(t => {
-      const type = getSuffix(t.name);
-      const shortName = t.name.split(/[-–]/).pop().trim();
-      return `<div class="conflict-row">
-        <span class="tag ${type}">${type}</span>
-        <span class="conflict-name">${shortName}</span>
-        <span style="color:var(--success);font-size:11px;font-family:'DM Mono',monospace;">✓ completed</span>
-      </div>`;
-    }).join("");
-    modal.style.display = "flex";
-    document.getElementById("completedYesBtn").onclick  = () => { modal.style.display = "none"; resolve(true); };
-    document.getElementById("completedNoBtn").onclick   = () => { modal.style.display = "none"; resolve(false); };
-  });
-}
-
-// ── ASANA OPERATIONS ─────────────────────────────────────────────────────────
-// ── CONFIRMATION MODAL ───────────────────────────────────────────────
-function showConfirmModal(conflicts) {
-  return new Promise(resolve => {
-    const modal = document.getElementById("confirmModal");
-    const list  = document.getElementById("conflictList");
-    list.innerHTML = conflicts.map(c =>
-      `<div class="conflict-row">
-        <span class="tag ${c.type}">${c.type}</span>
-        <span class="conflict-name">${c.name}</span>
-        <span class="conflict-arrow">→</span>
-        <span class="conflict-dates"><span class="conflict-old">${c.existing}</span> → <strong>${c.newDate}</strong></span>
-      </div>`
-    ).join("");
-    modal.style.display = "flex";
-    document.getElementById("confirmYesBtn").onclick = () => { modal.style.display = "none"; resolve("all"); };
-    document.getElementById("confirmSkipBtn").onclick = () => { modal.style.display = "none"; resolve("skip"); };
-    document.getElementById("confirmCancelBtn").onclick = () => { modal.style.display = "none"; resolve("cancel"); };
-  });
-}
-
-function showCompletedModal(tasks) {
-  return new Promise(resolve => {
-    const modal = document.getElementById("completedModal");
-    const list  = document.getElementById("completedList");
-    list.innerHTML = tasks.map(t => {
-      const type = getSuffix(t.name);
-      const shortName = t.name.split(/[-–]/).pop().trim();
-      return `<div class="conflict-row">
-        <span class="tag ${type}">${type}</span>
-        <span class="conflict-name">${shortName}</span>
-        <span style="color:var(--success);font-size:11px;font-family:'DM Mono',monospace;">✓ completed</span>
-      </div>`;
-    }).join("");
-    modal.style.display = "flex";
-    document.getElementById("completedYesBtn").onclick  = () => { modal.style.display = "none"; resolve(true); };
-    document.getElementById("completedNoBtn").onclick   = () => { modal.style.display = "none"; resolve(false); };
-  });
+function getSkipReason(name) {
+  const parts = name.trim().split(/[-–]/);
+  const last = parts[parts.length - 1].trim();
+  return last ? `suffix "<strong>${last}</strong>" not in rules (Art, OPS, Copy, Config)` : "no recognizable suffix found";
 }
 
 // ── ASANA OPERATIONS ─────────────────────────────────────────────────────────
@@ -725,177 +501,235 @@ async function getSubtasks(taskId) {
   const data = await asanaGet(`/tasks/${taskId}?opt_fields=subtasks,subtasks.name,subtasks.gid,subtasks.due_on,subtasks.completed,subtasks.memberships,subtasks.memberships.project.gid`);
   return data.data.subtasks || [];
 }
-
 function getTaskProjectIds(task) {
   if (!task.memberships) return new Set();
   return new Set(task.memberships.map(m => m.project && m.project.gid).filter(Boolean));
 }
-
+async function resolveAssignee(input) {
+  if (!input || !input.trim()) return null;
+  const query = input.trim();
+  // Try searching by name or email
+  const data = await asanaGet(`/workspaces?opt_fields=gid`);
+  const workspaceGid = data.data[0]?.gid;
+  if (!workspaceGid) throw new Error("Could not find workspace");
+  const results = await asanaGet(`/workspaces/${workspaceGid}/typeahead?resource_type=user&query=${encodeURIComponent(query)}&count=5`);
+  if (!results.data || results.data.length === 0) throw new Error(`Assignee "${query}" not found in Asana`);
+  return results.data[0].gid; // Use first match
+}
 async function addTaskToProject(taskGid, projectGid, sectionGid) {
   const body = { data: { project: projectGid } };
   if (sectionGid) body.data.section = sectionGid;
   await asanaPost(`/tasks/${taskGid}/addProject`, body);
 }
-
 async function setDueDate(taskGid, dueOn) {
   await asanaPut(`/tasks/${taskGid}`, { data: { due_on: dueOn } });
 }
-
-async function updateSubtask(gid, projects, dueOn) {
-  for (const p of projects) {
-    await addTaskToProject(gid, p.project, p.section);
-  }
-  if (dueOn) await setDueDate(gid, dueOn);
-  return true;
+async function setAssignee(taskGid, assigneeGid) {
+  await asanaPut(`/tasks/${taskGid}`, { data: { assignee: assigneeGid } });
 }
 
-function getSuffix(name) {
-  const n = name.trim();
-  if (/[-–]\s*Art$/i.test(n)    || /^Art$/i.test(n))    return "art";
-  if (/[-–]\s*OPS$/i.test(n)    || /^OPS$/i.test(n))    return "ops";
-  if (/[-–]\s*Copy$/i.test(n)   || /^Copy$/i.test(n))   return "copy";
-  if (/[-–]\s*Config$/i.test(n) || /^Config$/i.test(n)) return "config";
-  return null;
+// ── MODALS ────────────────────────────────────────────────────────────────────
+function showCompletedModal(tasks) {
+  return new Promise(resolve => {
+    const modal = document.getElementById("completedModal");
+    document.getElementById("completedList").innerHTML = tasks.map(t => {
+      const type = getSuffix(t.name);
+      const shortName = t.name.trim().split(/[-–]/).pop().trim();
+      return `<div class="conflict-row"><span class="tag ${type}">${type}</span><span class="conflict-name">${shortName}</span><span style="color:var(--success);font-size:11px;">✓ completed</span></div>`;
+    }).join("");
+    modal.style.display = "flex";
+    document.getElementById("completedYesBtn").onclick = () => { modal.style.display = "none"; resolve(true); };
+    document.getElementById("completedNoBtn").onclick  = () => { modal.style.display = "none"; resolve(false); };
+  });
+}
+function showConfirmModal(conflicts) {
+  return new Promise(resolve => {
+    const modal = document.getElementById("confirmModal");
+    document.getElementById("conflictList").innerHTML = conflicts.map(c =>
+      `<div class="conflict-row"><span class="tag ${c.type}">${c.type}</span><span class="conflict-name">${c.name}</span><span><span class="conflict-old">${c.existing}</span> → <strong>${c.newDate}</strong></span></div>`
+    ).join("");
+    modal.style.display = "flex";
+    document.getElementById("confirmYesBtn").onclick    = () => { modal.style.display = "none"; resolve("all"); };
+    document.getElementById("confirmSkipBtn").onclick   = () => { modal.style.display = "none"; resolve("skip"); };
+    document.getElementById("confirmCancelBtn").onclick = () => { modal.style.display = "none"; resolve("cancel"); };
+  });
 }
 
-function getSkipReason(name) {
-  const n = name.trim();
-  // Extract whatever comes after the last dash as the "suffix"
-  const parts = n.split(/[-–]/);
-  const lastPart = parts[parts.length - 1].trim();
-  if (lastPart) return `suffix "<strong>${lastPart}</strong>" not in rules`;
-  return "no recognizable suffix";
+// ── LOGGING ───────────────────────────────────────────────────────────────────
+function addLog(msg, type = "wait", reason = null) {
+  const el = document.getElementById("log");
+  const line = document.createElement("div");
+  line.className = "log-line";
+  const icons = { ok: "✓", err: "✗", wait: "·", warn: "⚠" };
+  let html = `<span class="log-icon ${type}">${icons[type]}</span><div><div class="log-text">${msg}</div>`;
+  if (reason) html += `<div class="log-reason">↳ ${reason}</div>`;
+  html += `</div>`;
+  line.innerHTML = html;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+  return line;
+}
+function updateLine(line, msg, type, reason = null) {
+  const icons = { ok: "✓", err: "✗", wait: "·", warn: "⚠" };
+  line.querySelector(".log-icon").className = `log-icon ${type}`;
+  line.querySelector(".log-icon").textContent = icons[type];
+  line.querySelector(".log-text").innerHTML = msg;
+  let reasonEl = line.querySelector(".log-reason");
+  if (reason) {
+    if (!reasonEl) { reasonEl = document.createElement("div"); reasonEl.className = "log-reason"; line.querySelector("div").appendChild(reasonEl); }
+    reasonEl.innerHTML = `↳ ${reason}`;
+  } else if (reasonEl) { reasonEl.remove(); }
 }
 
-// ── RUN ──────────────────────────────────────────────────────────────────────
+// ── RUN ───────────────────────────────────────────────────────────────────────
 async function run() {
   const taskId       = document.getElementById("taskId").value.trim();
   const dueArtOps    = document.getElementById("dueArtOps").value;
   const dueCopy      = document.getElementById("dueCopy").value;
   const manualConfig = document.getElementById("dueConfig").value;
+  const assigneeCopyInput   = document.getElementById("assigneeCopy").value.trim();
+  const assigneeConfigInput = document.getElementById("assigneeConfig").value.trim();
 
-  if (!taskId)    { alert("Please enter a task ID."); return; }
-  if (!dueArtOps) { alert("Please enter a due date for Art & OPS subtasks."); return; }
-  if (!dueCopy)   { alert("Please enter a due date for Copy subtasks."); return; }
+  if (!taskId) { alert("Please enter a task ID."); return; }
 
-  const configResult = computeConfigDate(dueArtOps, manualConfig);
-  const dueConfig    = configResult ? configResult.date : subtractDays(dueArtOps, 5);
+  // Compute config date only if artOps is set
+  const configResult = dueArtOps ? computeConfigDate(dueArtOps, manualConfig) : null;
+  const dueConfig    = configResult ? configResult.date : (manualConfig || null);
 
   const btn     = document.getElementById("runBtn");
   const spinner = document.getElementById("spinner");
   const btnText = document.getElementById("btnText");
+  btn.disabled = true; spinner.style.display = "block"; btnText.textContent = "Running…";
 
-  btn.disabled = true;
-  spinner.style.display = "block";
-  btnText.textContent = "Running…";
-
-  document.getElementById("formArea").style.display = "none";
+  document.getElementById("formArea").style.display   = "none";
   document.getElementById("resultsArea").style.display = "block";
-  document.getElementById("doneBanner").style.display = "none";
+  document.getElementById("doneBanner").style.display  = "none";
   document.getElementById("log").innerHTML = "";
 
-  const counts     = { art: 0, ops: 0, copy: 0, config: 0 };
-  const dueDateMap = { art: dueArtOps, ops: dueArtOps, copy: dueCopy, config: dueConfig };
+  const counts = { art: 0, ops: 0, copy: 0, config: 0 };
+  const dueDateMap = { art: dueArtOps || null, ops: dueArtOps || null, copy: dueCopy || null, config: dueConfig };
 
   try {
+    // Resolve assignees upfront
+    let assigneeCopyGid = null, assigneeConfigGid = null;
+    if (assigneeCopyInput) {
+      const assigneeLine = addLog(`Resolving Copy assignee "<strong>${assigneeCopyInput}</strong>"…`);
+      try {
+        assigneeCopyGid = await resolveAssignee(assigneeCopyInput);
+        updateLine(assigneeLine, `Copy assignee resolved: <strong>${assigneeCopyInput}</strong>`, "ok");
+      } catch(e) {
+        updateLine(assigneeLine, `Copy assignee not found: "${assigneeCopyInput}"`, "err", e.message);
+      }
+    }
+    if (assigneeConfigInput) {
+      const assigneeLine = addLog(`Resolving Config assignee "<strong>${assigneeConfigInput}</strong>"…`);
+      try {
+        assigneeConfigGid = await resolveAssignee(assigneeConfigInput);
+        updateLine(assigneeLine, `Config assignee resolved: <strong>${assigneeConfigInput}</strong>`, "ok");
+      } catch(e) {
+        updateLine(assigneeLine, `Config assignee not found: "${assigneeConfigInput}"`, "err", e.message);
+      }
+    }
+
+    // Fetch subtasks
     const fetchLine = addLog(`Fetching subtasks for task <strong>${taskId}</strong>…`);
     const subtasks  = await getSubtasks(taskId);
     updateLine(fetchLine, `Found <strong>${subtasks.length}</strong> subtask(s)`, "ok");
 
-    if (configResult && configResult.wasAdjusted) {
-      addLog(`Config date adjusted: <strong>${configResult.original}</strong> (${DAY_NAMES[new Date(configResult.original).getDay()]}) → <strong>${dueConfig}</strong> (Thursday)`, "warn");
-    } else {
-      const label = !manualConfig ? "auto: OPS −5 days" : "manual";
-      addLog(`Config due date: <strong>${dueConfig}</strong> (${DAY_NAMES[new Date(dueConfig).getDay()]}) — ${label}`, "wait");
+    // Log config date
+    if (dueConfig) {
+      if (configResult && configResult.wasAdjusted) {
+        addLog(`Config date: <strong>${configResult.original}</strong> (${DAY_NAMES[new Date(configResult.original).getDay()]}) → adjusted to Thursday <strong>${dueConfig}</strong>`, "warn");
+      } else {
+        const label = (dueArtOps && !manualConfig) ? "auto: OPS −5 days" : "manual";
+        addLog(`Config due date: <strong>${dueConfig}</strong> (${DAY_NAMES[new Date(dueConfig).getDay()]}) — ${label}`, "wait");
+      }
     }
 
-    const matched  = subtasks.filter(t => getSuffix(t.name));
-    const unmatched = subtasks.filter(t => !getSuffix(t.name));
+    // Separate matched from unmatched
+    const matched   = subtasks.filter(t => getSuffix(t.name) !== null);
+    const unmatched = subtasks.filter(t => getSuffix(t.name) === null);
 
-    // Point 3: Show skipped subtasks with reason
-    if (unmatched.length > 0) {
-      unmatched.forEach(t => {
-        addLog(`Skipping "<strong>${t.name.trim()}</strong>" — ${getSkipReason(t.name)}`, "wait");
-      });
-    }
+    // Point 3: Show skip reasons for unmatched
+    unmatched.forEach(t => {
+      addLog(`Skipping "<strong>${t.name.trim()}</strong>"`, "wait", getSkipReason(t.name));
+    });
 
     // Point 2: Warn about completed subtasks
     const completedMatched = matched.filter(t => t.completed);
-    let proceedWithCompleted = true;
     if (completedMatched.length > 0) {
-      addLog(`⚠ ${completedMatched.length} matched subtask(s) are already completed — asking for confirmation…`, "warn");
-      proceedWithCompleted = await showCompletedModal(completedMatched);
-      if (!proceedWithCompleted) {
+      addLog(`⚠ ${completedMatched.length} matched subtask(s) are already completed`, "warn");
+      const proceed = await showCompletedModal(completedMatched);
+      if (!proceed) {
         addLog("Automation cancelled.", "err");
-        document.getElementById("runBtn").disabled = false;
-        document.getElementById("spinner").style.display = "none";
-        document.getElementById("btnText").textContent = "Run automation";
+        btn.disabled = false; spinner.style.display = "none"; btnText.textContent = "Run automation";
         return;
       }
     }
 
-    // Point 1: Check if already in project
-    const alreadyInProject = {};
+    // Point 1: Check which projects each subtask is already in
+    const alreadyInMap = {};
     matched.forEach(t => {
       const existingProjects = getTaskProjectIds(t);
       const type = getSuffix(t.name);
-      const targetProjects = RULES[type];
-      const alreadyIn = targetProjects.filter(p => existingProjects.has(p.project));
-      if (alreadyIn.length > 0) alreadyInProject[t.gid] = alreadyIn.map(p => p.project);
+      alreadyInMap[t.gid] = RULES[type].filter(p => existingProjects.has(p.project)).map(p => p.project);
     });
 
-    // Point 3 (due date): Check for existing due dates that would be overwritten
+    // Due date conflict check
     const conflicts = matched.filter(t => {
       const type = getSuffix(t.name);
       const due  = dueDateMap[type];
       return due && t.due_on && t.due_on !== due;
     }).map(t => ({
-      gid: t.gid,
-      type: getSuffix(t.name),
-      name: t.name.split(/[-–]/).pop().trim(),
-      existing: t.due_on,
-      newDate: dueDateMap[getSuffix(t.name)]
+      gid: t.gid, type: getSuffix(t.name),
+      name: t.name.trim().split(/[-–]/).pop().trim(),
+      existing: t.due_on, newDate: dueDateMap[getSuffix(t.name)]
     }));
 
     let overwriteDecision = "all";
     if (conflicts.length > 0) {
-      addLog(`⚠ ${conflicts.length} subtask(s) already have due dates — asking for confirmation…`, "warn");
+      addLog(`⚠ ${conflicts.length} subtask(s) already have due dates`, "warn");
       overwriteDecision = await showConfirmModal(conflicts);
       if (overwriteDecision === "cancel") {
         addLog("Automation cancelled.", "err");
-        document.getElementById("runBtn").disabled = false;
-        document.getElementById("spinner").style.display = "none";
-        document.getElementById("btnText").textContent = "Run automation";
+        btn.disabled = false; spinner.style.display = "none"; btnText.textContent = "Run automation";
         return;
       }
     }
-
     const skipDueDateGids = overwriteDecision === "skip" ? new Set(conflicts.map(c => c.gid)) : new Set();
 
+    // Process each matched subtask
     for (const t of matched) {
       const type      = getSuffix(t.name);
-      const shortName = t.name.split(/[-–]/).pop().trim();
-      const due       = dueDateMap[type];
+      const shortName = t.name.trim().split(/[-–]/).pop().trim();
+      const due       = skipDueDateGids.has(t.gid) ? null : dueDateMap[type];
       const projects  = RULES[type];
-
-      const effectiveDue = skipDueDateGids.has(t.gid) ? null : due;
-      const dueLabel     = effectiveDue ? ` + due ${effectiveDue}` : "";
-      const skipDueNote  = skipDueDateGids.has(t.gid) ? ` <span style="color:var(--muted)">(kept existing date ${t.due_on})</span>` : "";
-
-      // Filter out projects the task is already in
-      const alreadyIn    = alreadyInProject[t.gid] || [];
-      const newProjects  = projects.filter(p => !alreadyIn.includes(p.project));
-      const alreadyNote  = alreadyIn.length > 0
-        ? ` <span style="color:var(--muted)">(already in ${alreadyIn.length} project${alreadyIn.length > 1 ? "s" : ""})</span>`
-        : "";
+      const alreadyIn = alreadyInMap[t.gid] || [];
+      const newProjects = projects.filter(p => !alreadyIn.includes(p.project));
+      const assigneeGid = type === "copy" ? assigneeCopyGid : type === "config" ? assigneeConfigGid : null;
 
       const line = addLog(`<span class="tag ${type}">${type}</span> ${shortName}…`);
+      const notes = [];
+      if (alreadyIn.length > 0) notes.push(`already in ${alreadyIn.length} project${alreadyIn.length > 1 ? "s" : ""} — skipped`);
+      if (skipDueDateGids.has(t.gid)) notes.push(`kept existing due date ${t.due_on}`);
+
       try {
-        await updateSubtask(t.gid, newProjects, effectiveDue);
-        updateLine(line, `<span class="tag ${type}">${type}</span> ${shortName} — done${dueLabel}${skipDueNote}${alreadyNote}`, "ok");
+        // Add to new projects
+        for (const p of newProjects) {
+          await addTaskToProject(t.gid, p.project, p.section);
+        }
+        // Set due date
+        if (due) await setDueDate(t.gid, due);
+        // Set assignee
+        if (assigneeGid) await setAssignee(t.gid, assigneeGid);
+
+        const dueLabel      = due ? ` · due ${due}` : "";
+        const assigneeLabel = assigneeGid ? ` · assigned` : "";
+        const noteStr       = notes.length ? ` <span style="color:var(--muted);font-size:11px;">(${notes.join(", ")})</span>` : "";
+        updateLine(line, `<span class="tag ${type}">${type}</span> ${shortName} — done${dueLabel}${assigneeLabel}${noteStr}`, "ok");
         counts[type]++;
       } catch(e) {
-        updateLine(line, `<span class="tag ${type}">${type}</span> ${shortName} — failed: ${e.message}`, "err");
+        updateLine(line, `<span class="tag ${type}">${type}</span> ${shortName} — failed`, "err", e.message);
       }
     }
 
@@ -910,56 +744,44 @@ async function run() {
   document.getElementById("copyCount").textContent   = counts.copy;
   document.getElementById("configCount").textContent = counts.config;
 
-  btn.disabled = false;
-  spinner.style.display = "none";
-  btnText.textContent = "Run automation";
+  btn.disabled = false; spinner.style.display = "none"; btnText.textContent = "Run automation";
 }
 
 function resetForm() {
-  document.getElementById("formArea").style.display = "block";
+  document.getElementById("formArea").style.display   = "block";
   document.getElementById("resultsArea").style.display = "none";
-  document.getElementById("taskId").value    = "";
-  document.getElementById("dueArtOps").value = "";
-  document.getElementById("dueCopy").value   = "";
-  document.getElementById("dueConfig").value = "";
+  ["taskId","dueArtOps","dueCopy","dueConfig","assigneeCopy","assigneeConfig"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
   document.getElementById("configPreview").style.display = "none";
 }
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
+// ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
   const params = new URLSearchParams(window.location.search);
-  const code   = params.get("code");
-  const state  = params.get("state");
-  const error  = params.get("error");
-
-  // Clean URL
+  const code = params.get("code"), state = params.get("state"), error = params.get("error");
   if (code || error) window.history.replaceState({}, document.title, window.location.pathname);
 
   if (error) {
     document.getElementById("oauthError").style.display = "block";
     document.getElementById("oauthError").textContent = `Asana login error: ${error}. Please try again.`;
-    document.getElementById("loginArea").style.display = "block";
-    return;
+    document.getElementById("loginArea").style.display = "block"; return;
   }
-
   if (code) {
     const savedState = sessionStorage.getItem("oauth_state");
     if (state !== savedState) {
       document.getElementById("oauthError").style.display = "block";
       document.getElementById("oauthError").textContent = "OAuth state mismatch. Please try logging in again.";
-      document.getElementById("loginArea").style.display = "block";
-      return;
+      document.getElementById("loginArea").style.display = "block"; return;
     }
     sessionStorage.removeItem("oauth_state");
     const ok = await exchangeCode(code);
     if (!ok) {
       document.getElementById("oauthError").style.display = "block";
       document.getElementById("oauthError").textContent = "Failed to exchange login code. Please try again.";
-      document.getElementById("loginArea").style.display = "block";
-      return;
+      document.getElementById("loginArea").style.display = "block"; return;
     }
   }
-
   if (accessToken) {
     document.getElementById("loginArea").style.display = "none";
     document.getElementById("appArea").style.display   = "block";
@@ -969,7 +791,6 @@ async function init() {
     document.getElementById("appArea").style.display   = "none";
   }
 }
-
 init();
 </script>
 </body>
