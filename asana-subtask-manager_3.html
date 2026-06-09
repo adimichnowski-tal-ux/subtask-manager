@@ -768,14 +768,14 @@ function buildPostRunAssignArea() {
   area.style.display = "block";
 
   postRunConfigSubtasks.forEach(t => {
-    const shortName = t.name.trim().split(/[-–]/).pop().trim();
+    const fullName  = t.name.trim();
     const rowId  = `pr_input_${t.gid}`;
     const dropId = `pr_drop_${t.gid}`;
     const selId  = `pr_sel_${t.gid}`;
     const row = document.createElement("div");
     row.className = "config-assign-row"; row.id = `pr_row_${t.gid}`;
     row.innerHTML = `
-      <div class="row-name"><span class="tag config">Config</span>${shortName}</div>
+      <div class="row-name"><span class="tag config" style="flex-shrink:0;">Config</span><span style="font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);font-weight:400;line-height:1.4;">${fullName}</span></div>
       <div style="display:flex;gap:8px;align-items:flex-start;">
         <div class="autocomplete-wrap" style="flex:1;">
           <input type="text" id="${rowId}" placeholder="Search team member… (or skip)" autocomplete="off" />
