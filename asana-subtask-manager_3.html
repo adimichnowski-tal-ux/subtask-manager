@@ -509,9 +509,32 @@ function clearConfigAssignee() {
 }
 
 // ── ASANA OPS ─────────────────────────────────────────────────────────────────
+async function getTaskInfo(taskId) {
+  const data = await asanaGet(`/tasks/${taskId}?opt_fields=name,due_on,subtasks,subtasks.name,subtasks.gid,subtasks.due_on,subtasks.completed,subtasks.memberships,subtasks.memberships.project.gid`);
+  return data.data;
+}
 async function getSubtasks(taskId) {
-  const data = await asanaGet(`/tasks/${taskId}?opt_fields=subtasks,subtasks.name,subtasks.gid,subtasks.due_on,subtasks.completed,subtasks.memberships,subtasks.memberships.project.gid`);
-  return data.data.subtasks || [];
+  const task = await getTaskInfo(taskId);
+  return task.subtasks || [];
+}
+
+// Extract first date from task name (e.g. "01/07 - 10/07 - ..." → "2026-07-01")
+// Also accepts task's due_on as fallback
+function extractFirstDate(taskName, taskDueOn) {
+  // Match DD/MM pattern at the start of the name
+  const match = taskName && taskName.match(/(\d{1,2})\/(\d{1,2})/);
+  if (match) {
+    const day   = match[1].padStart(2, "0");
+    const month = match[2].padStart(2, "0");
+    // Use current year; if the resulting date is in the past by >6 months, use next year
+    const now   = new Date();
+    let year    = now.getFullYear();
+    const candidate = new Date(`${year}-${month}-${day}`);
+    if (candidate < new Date(now.getTime() - 180 * 86400000)) year++;
+    return `${year}-${month}-${day}`;
+  }
+  // Fallback to task's own due_on
+  return taskDueOn || null;
 }
 function getTaskProjectIds(task) {
   if (!task.memberships) return new Set();
@@ -575,13 +598,37 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("taskId").addEventListener("input", () => {
     clearTimeout(fetchDebounce);
     const val = document.getElementById("taskId").value.trim();
-    if (val.length < 10) { document.getElementById("configAssigneeCard").style.display = "none"; return; }
+    if (val.length < 10) {
+      document.getElementById("configAssigneeCard").style.display = "none";
+      const hint = document.getElementById("dueArtOpsHint");
+      if (hint) hint.remove();
+      return;
+    }
     fetchDebounce = setTimeout(async () => {
       try {
-        const subtasks = await getSubtasks(val);
-        fetchedSubtasks = subtasks;
-        const configCount = subtasks.filter(t => getSuffix(t.name) === "config").length;
+        const taskInfo = await getTaskInfo(val);
+        fetchedSubtasks = taskInfo.subtasks || [];
+        const configCount = fetchedSubtasks.filter(t => getSuffix(t.name) === "config").length;
         initConfigAssigneeCard(configCount);
+
+        // Auto-fill Art/OPS date if not already set by user
+        const artOpsInput = document.getElementById("dueArtOps");
+        if (!artOpsInput.value) {
+          const firstDate = extractFirstDate(taskInfo.name, taskInfo.due_on);
+          if (firstDate) {
+            artOpsInput.value = firstDate;
+            updateConfigPreview();
+            // Show a subtle hint that this was auto-filled
+            let hint = document.getElementById("dueArtOpsHint");
+            if (!hint) {
+              hint = document.createElement("div");
+              hint.id = "dueArtOpsHint";
+              hint.style.cssText = "font-size:11px;color:var(--muted);opacity:0.8;margin-top:6px;font-family:'DM Mono',monospace;";
+              artOpsInput.parentNode.insertBefore(hint, artOpsInput.nextSibling);
+            }
+            hint.innerHTML = `✓ auto-filled from task (${taskInfo.due_on ? "due date" : "name"})`;
+          }
+        }
       } catch(e) { /* silent */ }
     }, 600);
   });
@@ -805,6 +852,8 @@ function resetForm() {
   document.getElementById("configPreview").style.display = "none";
   document.getElementById("configAssigneeCard").style.display = "none";
   fetchedSubtasks=[]; configAssigneeGid=null; postRunConfigSubtasks=[];
+  const hint = document.getElementById("dueArtOpsHint");
+  if (hint) hint.remove();
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
