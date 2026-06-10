@@ -640,8 +640,10 @@ document.addEventListener("DOMContentLoaded", () => {
         initConfigAssigneeCard(configCount);
 
         // Auto-fill Art/OPS date if not already set by user
+        // Fetch date fields separately to ensure start_on is included
         if (!document.getElementById("dueArtOps").value) {
-          applyAutoFillDate(taskInfo);
+          const dateData = await asanaGet(`/tasks/${val}?opt_fields=name,due_on,start_on`);
+          applyAutoFillDate(dateData.data);
         }
       } catch(e) { console.warn("Background fetch failed:", e.message); }
     }, 600);
@@ -683,7 +685,13 @@ async function run() {
 
   // Auto-fill Art/OPS date if still empty (fallback for when debounce didn't fire)
   if (!document.getElementById("dueArtOps").value && taskInfoCache) {
-    applyAutoFillDate(taskInfoCache);
+    // Fetch date fields separately to guarantee start_on is included
+    try {
+      const dateData = await asanaGet(`/tasks/${taskId}?opt_fields=name,due_on,start_on`);
+      applyAutoFillDate(dateData.data);
+    } catch(e) {
+      applyAutoFillDate(taskInfoCache); // fall back to cached data
+    }
     dueArtOps = document.getElementById("dueArtOps").value || null;
   }
 
