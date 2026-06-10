@@ -625,8 +625,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const val = document.getElementById("taskId").value.trim();
     if (val.length < 10) {
       document.getElementById("configAssigneeCard").style.display = "none";
+      document.getElementById("dueArtOps").value = "";
+      document.getElementById("configPreview").style.display = "none";
       const hint = document.getElementById("dueArtOpsHint");
       if (hint) hint.remove();
+      fetchedSubtasks = [];
       return;
     }
     fetchDebounce = setTimeout(async () => {
