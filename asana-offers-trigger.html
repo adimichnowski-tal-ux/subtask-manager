@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asana Offers Trigger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0c0e; --surface: #13151a; --surface2: #1c1f27;
+    --border: rgba(255,255,255,0.07); --border-strong: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7d86;
+    --accent: #9b8cff; --accent-hover: #b0a4ff;
+    --success: #6ae8a0; --success-bg: rgba(106,232,160,0.08);
+    --danger: #e87a6a; --danger-bg: rgba(232,122,106,0.08);
+    --warn: #e8b46a; --warn-bg: rgba(232,180,106,0.08);
+  }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px 80px; position: relative; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 700px; height: 400px; background: radial-gradient(ellipse, rgba(155,140,255,0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  .wrapper { width: 100%; max-width: 680px; position: relative; z-index: 1; }
+  header { margin-bottom: 40px; text-align: center; }
+  .logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--surface2); border: 1px solid var(--border-strong); border-radius: 12px; margin-bottom: 20px; font-size: 20px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 12px; margin: 0 0 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-strong);
+    background: var(--surface2); color: var(--text); font-size: 14px; margin-bottom: 14px; font-family: 'DM Mono', monospace;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .pipelines { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 8px; }
+  .pipe-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+  .pipe-item input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+  .pipe-item label { margin: 0; color: var(--text); font-size: 14px; cursor: pointer; }
+  .pipe-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+  .pipe-actions button { background: none; border: 1px solid var(--border-strong); color: var(--muted); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .pipe-actions button:hover { color: var(--text); border-color: var(--accent); }
+  .hint { font-size: 12px; color: var(--muted); margin: -8px 0 14px; line-height: 1.4; }
+  button.primary {
+    width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent);
+    color: #0b0c0e; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .userbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: var(--muted); }
+  .userbar a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .userbar a:hover { text-decoration: underline; }
+  #loginArea { text-align: center; }
+  #loginArea .card { text-align: left; }
+  #loginArea p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  #oauthError { display: none; background: var(--danger-bg); color: var(--danger); border-radius: 8px; padding: 12px 14px; font-size: 13px; margin-bottom: 16px; }
+  #appArea { display: none; }
+  #log {
+    margin-top: 8px; max-height: 320px; overflow-y: auto; background: #08090b; border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.6;
+  }
+  #log .line { white-space: pre-wrap; word-break: break-word; }
+  #log .ok { color: var(--success); }
+  #log .err { color: var(--danger); }
+  #log .warn { color: var(--warn); }
+  #log .muted { color: var(--muted); }
+  footer { margin-top: 32px; text-align: center; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <div class="logo-mark">⚡</div>
+    <h1>Asana Offers Trigger</h1>
+    <div class="sub">Runs the "Asana Offers (RO,MG,GR/WS)" automation directly against the Asana API.</div>
+  </header>
+
+  <div id="oauthError"></div>
+
+  <div id="loginArea">
+    <div class="card">
+      <h2>Connect your Asana account</h2>
+      <p>Sign in with Asana so tasks are created under your own account.</p>
+      <button class="primary" onclick="loginWithAsana()">Login with Asana</button>
+    </div>
+  </div>
+
+  <div id="appArea">
+    <div class="userbar">
+      <span id="userLabel"></span>
+      <a onclick="logout()">Log out</a>
+    </div>
+
+    <div class="card">
+      <h2>Dates</h2>
+      <div class="row">
+        <div>
+          <label for="rangeStart">Range start</label>
+          <input type="date" id="rangeStart">
+        </div>
+        <div>
+          <label for="rangeEnd">Range end</label>
+          <input type="date" id="rangeEnd">
+        </div>
+      </div>
+      <label for="specificDates">Or specific dates (overrides range above)</label>
+      <textarea id="specificDates" placeholder="2026-07-11, 2026-07-15&#10;2026-07-20"></textarea>
+      <div class="hint">One or more YYYY-MM-DD dates, comma or newline separated. Leave blank to use the range instead.</div>
+    </div>
+
+    <div class="card">
+      <h2>Pipelines to run</h2>
+      <div class="pipe-actions">
+        <button type="button" onclick="setAllPipelines(true)">Select all</button>
+        <button type="button" onclick="setAllPipelines(false)">Select none</button>
+      </div>
+      <div class="pipelines" id="pipelines"></div>
+      <div class="hint">Each pipeline looks for an existing planning task tagged for that offer type on the chosen date(s), then builds the parent task + subtasks from it. Dates with no matching planning task are skipped.</div>
+    </div>
+
+    <button class="primary" id="runBtn" onclick="runAll()">Run</button>
+    <div id="log" style="display:none;"></div>
+  </div>
+
+  <footer>Powered by Asana API</footer>
+</div>
+
+<script id="pipeline-spec" type="application/json">
+{"workspaceGid": "54393662698285", "buildDatesCode": "const rangeStart=($json.rangeStart||\"\").trim();const rangeEnd=($json.rangeEnd||\"\").trim();const specificRaw=($json.specificDates||\"\").trim();function parseSpecificDates(s){return s.split(/[\\n,]+/).map((x)=>x.trim()).filter(Boolean).filter((x)=>/^\\d{4}-\\d{2}-\\d{2}$/.test(x));}function addDaysUTC(iso,days){const[y,m,d]=iso.split(\"-\").map((n)=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,\"0\")}-${String(dt.getUTCDate()).padStart(2,\"0\")}`;}function buildRangeDates(startIso,endIso){if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(startIso)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(endIso))return[];const start=startIso<=endIso?startIso:endIso;const end=startIso<=endIso?endIso:startIso;const out=[];let cur=start;while(cur<=end){out.push(cur);cur=addDaysUTC(cur,1);}return out;}let dates=specificRaw?parseSpecificDates(specificRaw):buildRangeDates(rangeStart,rangeEnd);return dates.map((dueOn)=>({json:{...$json,dueOn}}));", "pipelines": {"RO": {"label": "RO", "tagId": "1214177633612858", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1203176178312898", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchResults=$items(\"Search RO Tasks\");const dateInfos=$items(\"Expand Date Range\");function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}function daysBetween(startIso,endIso){const[sy,sm,sd]=startIso.split(\"-\").map(n=>parseInt(n,10));const[ey,em,ed]=endIso.split(\"-\").map(n=>parseInt(n,10));const s=Date.UTC(sy,sm-1,sd);const e=Date.UTC(ey,em-1,ed);return Math.round((e-s)/86400000)+1;}return dateInfos.flatMap((dateItem,index)=>{const dueOn=dateItem.json.runDateISO;const tasksFound=searchResults[index].json.data||[];const matchingTask=tasksFound.find(t=>(t.tags||[]).some(tag=>tag.name===\"Rolling_Offer_Generic\"));if(!matchingTask)return[];const _bm=(matchingTask.name||\"\").match(/\\[([^\\]]*)\\]/);const offerLabel=_bm?_bm[1].trim():\"\";const rawStart=matchingTask.start_on||dueOn;const rawEnd=matchingTask.due_on||rawStart;const startPrefix=isoToDDMM(rawStart);const endPrefix=isoToDDMM(rawEnd);const durationDays=daysBetween(rawStart,rawEnd);const fullPrefix=`${startPrefix} - ${endPrefix}`;const baseName=`${durationDays} Days Rolling Offer${offerLabel?\" \"+offerLabel:\"\"}`;const parentName=`${fullPrefix} - ${baseName}`;const html=`<body><strong>General Info:</strong>\\n${baseName}\\nLeading theme: Generic theme if nothing else specified<hr/><strong>Economy:</strong>\\nTrail (The selling point are where the chips are, each segment has different amount of tiles. Minimum 15 tiles with 3 selling points, Maximum 25 tiles with 5 selling points):\\n\\nIn-App (first chips sale: PUs X%, NPUs X%):\\n\\nWebshop (first chips sale: PUs X%, NPUs X%):\\n\\nGolden Ring (first chips sale: PUs X%, NPUs X%):<hr/><strong>Art/Copy:</strong>\\n<strong>Re-run 🎨</strong><ul><li>General info: See general and econ section</li><li>Leading theme: Generic theme</li><li>Reference: Think we can mostly take this 19/01 - 15/02 - Rolling Offer Always On AB Test [19/01 07:00 AM UTC - 16/02 07:00 AM UTC]</li></ul>WS**************************************************************\\nUse AC language\\n2 versions:\\n&lt;HEADER&gt;\\n&lt;OFFER TRAIL logo&gt;\\nLooonger trail,\\nbigger rewards\\n&lt;let's make the tiles or the chips progressively bigger - we have two versions with different %&gt;\\n&lt;1st TILE&gt; - X% / X%\\n&lt;2nd TILE&gt; - &lt;Bigger pile&gt;\\n&lt;3rd TILE&gt; - &lt;Bigger pile&gt;\\nBadge: &lt;Huuuge Charms&gt; &amp; &lt;TOKENS&gt;\\nINCLUDED\\nBadge: live in the WS\\nBadge: Same price, higher value!\\nCTA: LET'S GET MORE!\\nT&amp;C: Time-limited promo; One time only; The Offer Trail will disappear after its completion; Image shown for illustrative purposes only\\n\\nGR**************************************************************\\nUse AC language\\n2 versions:\\n&lt;HEADER&gt;\\n&lt;OFFER TRAIL logo&gt;\\nLooonger trail,\\nbigger rewards\\n&lt;let's make the tiles or the chips progressively bigger - we have two versions with different %&gt;\\n&lt;1st TILE&gt; - X% / X%\\n&lt;2nd TILE&gt; - &lt;Bigger pile&gt;\\n&lt;3rd TILE&gt; - &lt;Bigger pile&gt;\\nBadge: &lt;Huuuge Charms&gt; &amp; &lt;TOKENS&gt;\\nINCLUDED\\nBadge: live in the GR\\nBadge: Same price, higher value!\\nCTA: LET'S GET MORE!\\nT&amp;C: Time-limited promo; One time only; The Offer Trail will disappear after its completion; Image shown for illustrative purposes only<hr/><strong>Social Media:</strong><hr/><strong>BA:</strong><hr/><strong>OPS:</strong></body>`;return[{json:{parentName,parentHtml:html,startOn:rawStart,endOn:rawEnd,_passThrough:{fullPrefix,baseName,parentDueOn:rawStart}}}];});", "buildCode": "function economyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split(\"T\")[0];}function copyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split(\"T\")[0];}const parentInputs=$items(\"Process RO Tags\");const artNotesText=\"🎨 Design Tips:\\n• \\n\\n---------------------------------------------------\\nBody:\\n\\nBadge 1: <Multiplier>\\nBadge 2:\\nBadge 3:\\n\\nCTA:\";return $input.all().flatMap((item,index)=>{const parentGid=$items(\"Create RO Parent Task\")[index].json.gid;const passThrough=parentInputs[index].json._passThrough||{};const fullPrefix=passThrough.fullPrefix||\"\";const baseName=passThrough.baseName||\"Rolling Offer Generic\";const parentDueOn=passThrough.parentDueOn;if(!parentGid)return[];const econDueOn=economyDueDateFromParent(parentDueOn);const copyDueOn=copyDueDateFromParent(parentDueOn);return[{json:{parentGid,name:`${fullPrefix} - ${baseName} - GR Banner - ANN 2 versions - ART`,assigneeGid:null,dueOn:parentDueOn,notes:artNotesText,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},{json:{parentGid,name:`GR****************************************`,assigneeGid:null,dueOn:null,notes:\"\",_passThrough:{projectGids:[],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - ${baseName} - WS Banner - ANN 2 versions - ART`,assigneeGid:null,dueOn:parentDueOn,notes:artNotesText,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},{json:{parentGid,name:`WEB SHOP********************************`,assigneeGid:null,dueOn:null,notes:\"\",_passThrough:{projectGids:[],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - ${baseName} - OPS D2C AC Top banner`,assigneeGid:null,dueOn:parentDueOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - ${baseName} - OPS D2C`,assigneeGid:null,dueOn:parentDueOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - ${baseName} - OPS in-app`,assigneeGid:null,dueOn:parentDueOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - ${baseName} - Art`,assigneeGid:null,dueOn:parentDueOn,notes:artNotesText,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - ${baseName} - Copy`,assigneeGid:\"1203098851994102\",dueOn:copyDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - ${baseName} - Config D2C`,assigneeGid:\"1208211102953242\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}},{json:{parentGid,name:`${fullPrefix} - ${baseName} - Config in app`,assigneeGid:\"1208211102953242\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}}];});"}, "MG": {"label": "MG", "tagId": "1214177633612859", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709750", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchResults=$items(\"Search MG Tasks\");const dateInfos=$items(\"Expand Date Range\");function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}return dateInfos.flatMap((dateItem,index)=>{const dueOn=dateItem.json.runDateISO;const tasksFound=searchResults[index].json.data||[];if(tasksFound.length===0)return[];const matchingTask=tasksFound[0];const rawStart=matchingTask.start_on||dueOn;const rawEnd=matchingTask.due_on||dueOn;const startPrefix=isoToDDMM(rawStart);const endPrefix=isoToDDMM(rawEnd);const fullPrefix=startPrefix===endPrefix?startPrefix:`${startPrefix} - ${endPrefix}`;const parentTitle=`${fullPrefix} - OOM + Lapsed payer DPO Mini Game (Price Cut) | WEB SHOP Regular + Lapsed Payers: More Moves + Diamonds (Price Cut) | GR Regular + Lapsed payers: More Moves + Diamonds (Price Cut)`;const html=`<body><strong>General Info:</strong>\\nThis task will contain all the DPOs needed for the Mini Game - please see the below info about every DPO\\nRoy Kaplan Mandelman Diamonds are included in all offers<hr/><strong>ECONOMY:</strong>\\nWe are starting a day later to put focus on the rolling - note rolling will be moves focused with first tile free moves\\n\\n<strong>DPO Out of Moves:</strong>\\n<ul><li>For all players</li><li>Not limited</li></ul><a href=\"https://app.asana.com/0/1202103624709695/1214224454797140\">https://app.asana.com/0/1202103624709695/1214224454797140</a>\\n\\n<strong>Out of moves scenario</strong>\\na. HIGH PP (include diamonds)\\nb. LOW PP (include diamonds)\\n\\n<strong>Lapsed Payers DPO - super moves offer (Price Cut) - Please Update with the price cut values</strong>\\nPlease make is a generous amount of moves\\n<ul><li>Target audience: Payers who did the last payment $&gt;=14$ Days ago</li><li>Purchase limit: 1 Time only</li><li>Login/Lobby/NF</li></ul>WEB SHOP + GR**************\\nLapsed payers:\\nRegular payers:\\n**<hr/><strong>Art/Copy:</strong>\\n<strong>Re-run (please specify)</strong>\\nGeneral info: See general\\n<strong>Leading theme:</strong>\\nPlease Specify\\n\\n<strong>Banners:</strong>\\n<ul><li>OOM DPO (Make sure design looks different)</li><li>High PP (with Diamonds)</li><li>Low PP (with Diamonds)</li><li>Lapsed Payers DPO (Make sure design looks different) (Price Cut)</li></ul>High PP (with Diamonds)\\nLow PP (with Diamonds)\\n\\nWEB SHOP + GR***************************************************<hr/><strong>OPS:</strong>\\nWEB SHOP + GR****************************\\n******\\n<a href=\"https://app.asana.com/0/1202103624709695/1214224454797140\">https://app.asana.com/0/1202103624709695/1214224454797140</a></body>`;return[{json:{parentName:parentTitle,parentHtml:html,startOn:rawStart===rawEnd?null:rawStart,endOn:rawEnd,_passThrough:{fullPrefix,startPrefix,endPrefix,parentStartOn:rawStart,parentDueOn:rawEnd}}}];});", "buildCode": "function economyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split(\"T\")[0];}function copyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split(\"T\")[0];}const parentInputs=$items(\"Process MG Tags\");return $input.all().flatMap((item,index)=>{const parentGid=$items(\"Create MG Parent Task\")[index].json.gid;const passThrough=parentInputs[index].json._passThrough||{};const fullPrefix=passThrough.fullPrefix||\"\";const startPrefix=passThrough.startPrefix||\"\";const endPrefix=passThrough.endPrefix||\"\";const parentStartOn=passThrough.parentStartOn;const parentDueOn=passThrough.parentDueOn;if(!parentGid)return[];const econDueOn=economyDueDateFromParent(parentStartOn);const copyDueOn=copyDueDateFromParent(parentStartOn);return[{json:{parentGid,name:`${fullPrefix} - WEB SHOP Lapsed Payers (Price Cut): More Moves + Diamonds | GR Lapsed payers: More Moves + Diamonds - D2C OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - WEB SHOP Lapsed Payers (Price Cut): More Moves + Diamonds | GR Lapsed payers: More Moves + Diamonds - D2C CONFIG`,assigneeGid:\"1208211102953242\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}},{json:{parentGid,name:`${fullPrefix} - WEB SHOP Regular Payers: More Moves + Diamonds | GR Regular payers: More Moves + Diamonds - D2C OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - WEB SHOP Regular Payers: More Moves + Diamonds | GR Regular payers: More Moves + Diamonds - D2C CONFIG`,assigneeGid:\"1208211102953242\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}},{json:{parentGid,name:`****************WS+GR*********************************`,assigneeGid:null,dueOn:null,notes:\"\",_passThrough:{projectGids:[],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - Lapsed payer DPO Mini Game - OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - Lapsed payer DPO Mini Game (Price Cut) - Config in-app`,assigneeGid:\"1208211102953242\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}},{json:{parentGid,name:`${fullPrefix} - Lapsed payer DPO Mini Game - Art`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},{json:{parentGid,name:`****************Lapsed DPOs*********************************`,assigneeGid:null,dueOn:null,notes:\"\",_passThrough:{projectGids:[],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - OOM DPO Mini Game - OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - OOM DPO Mini Game - Art Low pp`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - OOM DPO Mini Game - Art High pp`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},{json:{parentGid,name:`${fullPrefix} - OOM DPO Mini Game - Config in-app`,assigneeGid:\"1208211102953242\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}},{json:{parentGid,name:`${fullPrefix} - OOM + Lapsed payer DPO Mini Game - COPY`,assigneeGid:\"1203098851994102\",dueOn:copyDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}}];});"}, "TT": {"label": "TT", "tagId": "1214419068915205", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709751", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchResults=$items(\"Search TT Tasks\");const dateInfos=$items(\"Expand Date Range\");function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}return dateInfos.flatMap((dateItem,index)=>{const dueOn=dateItem.json.runDateISO;const tasksFound=searchResults[index].json.data||[];if(tasksFound.length===0)return[];const matchingTask=tasksFound[0];const rawStart=matchingTask.start_on||dueOn;const rawEnd=matchingTask.due_on||dueOn;const startPrefix=isoToDDMM(rawStart);const endPrefix=isoToDDMM(rawEnd);const fullPrefix=startPrefix===endPrefix?startPrefix:`${startPrefix} - ${endPrefix}`;let theme=\"X\";const match=(matchingTask.name||\"\").match(/THEME:\\s*([^)]+)/i);if(match&&match[1]){theme=match[1].trim();}const baseName=`Short TT (THEME: ${theme})`;const parentTitle=`${fullPrefix} - ${baseName} - Charms Arena/Vault/LVL UP`;const html=`<body><strong>General Info:</strong>\\n• TT pack needs to be added to DPOs/Charms Arena/Vault configs during the TT\\n• Configs are for the whole TT time\\nOther specifics: The approach is currently the same as for previous events 'iterations reference<hr/><strong>Economy:</strong>\\n<strong>Charms Arena:</strong>\\nBy Protocol:\\nCharms Arena- Regular (magical packs) + TT\\nCharms Arena - Need few items (magical packs) + TT\\nCharms Arena- Paid above Charms Arena - 5* Missing + TT (unlimited purchases)\\nCharms Arena + TT (One of the regular packs includes missing rarity 5*) (banner is not needed)\\n\\n<strong>DPO level UP:</strong>\\nLevel Up / + TT\\n\\n<strong>Vault:</strong>\\nVault / + TT<hr/><strong>Copy/Art:</strong>\\nPlease update<hr/><strong>OPS:</strong>\\nPlease update</body>`;return[{json:{parentName:parentTitle,parentHtml:html,startOn:rawStart===rawEnd?null:rawStart,endOn:rawEnd,_passThrough:{fullPrefix,baseName,parentStartOn:rawStart,parentDueOn:rawEnd}}}];});", "buildCode": "function economyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split(\"T\")[0];}function copyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split(\"T\")[0];}function addDays(parentDueIso,days){if(!parentDueIso)return null;const parts=parentDueIso.split(\"-\");const dt=new Date(Date.UTC(parseInt(parts[0],10),parseInt(parts[1],10)-1,parseInt(parts[2],10)));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split(\"T\")[0];}const parentInputs=$items(\"Process TT Tags\");const artNotesText=\"🎨 Design Tips:\\n• \\n\\n---------------------------------------------------\\nBody:\\n\\nBadge 1: <Multiplier>\\nBadge 2:\\nBadge 3:\\n\\nCTA:\";return $input.all().flatMap((item,index)=>{const parentGid=$items(\"Create TT Parent Task\")[index].json.gid;const passThrough=parentInputs[index].json._passThrough||{};const fullPrefix=passThrough.fullPrefix||\"\";const baseName=passThrough.baseName||\"Short TT (THEME: X)\";const parentStartOn=passThrough.parentStartOn;const parentDueOn=passThrough.parentDueOn;if(!parentGid)return[];const econDueOn=economyDueDateFromParent(parentStartOn);const copyDueOn=copyDueDateFromParent(parentStartOn);const revertDueOn=addDays(parentDueOn,1);return[{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - Vault revert to regular - OPS\",assigneeGid:null,dueOn:revertDueOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - LVL Up revert to regular - OPS\",assigneeGid:null,dueOn:revertDueOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - Charms Arena revert to regular - OPS\",assigneeGid:null,dueOn:revertDueOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - Vault - OPS\",assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - LVL Up - OPS\",assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - Charms Arena - OPS\",assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - Vault - Art\",assigneeGid:null,dueOn:parentStartOn,notes:artNotesText,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - LVL UP- Art\",assigneeGid:null,dueOn:parentStartOn,notes:artNotesText,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - Charms Arena- Art\",assigneeGid:null,dueOn:parentStartOn,notes:artNotesText,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - Charms Arena/Vault/LVL UP LVL Up - Copy\",assigneeGid:\"1203098851994102\",dueOn:copyDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - Vault - Config\",assigneeGid:\"1208211102953242\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - LVL UP - Config\",assigneeGid:\"1208211102953242\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}},{json:{parentGid:parentGid,name:fullPrefix+\" - \"+baseName+\" - Charms Arena - Config\",assigneeGid:\"1208211102953242\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}}];});"}, "GR_WS_Charms_NoTT": {"label": "GR_WS_Charms_NoTT", "tagId": "1214608392334799", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709746", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst searchResults = $items(\"Search GR_WS_Charms_NoTT Tasks\");\nconst dateInfos = $items(\"Expand Date Range\");\nreturn dateInfos.flatMap((dateItem, index) => {\n  const dueOn = dateItem.json.runDateISO;\n  const tasksFound = searchResults[index].json.data || [];\n  if (tasksFound.length === 0) return [];\n  const matchingTask = tasksFound[0];\n  const rawStart = matchingTask.start_on || dueOn;\n  const rawEnd   = matchingTask.due_on   || dueOn;\n  const startPrefix = isoToDDMM(rawStart);\n  const endPrefix   = isoToDDMM(rawEnd);\n  const endPlus1    = isoToDDMM(addDays(rawEnd, 1));\n  const fullPrefix  = startPrefix === endPrefix ? startPrefix : `${startPrefix} - ${endPrefix}`;\n  const baseName    = `GR + WEB SHOP DPO Charms offer (without TT)`;\n  const parentTitle = `${fullPrefix} - ${baseName} [${startPrefix} 07:00 AM UTC - ${endPlus1} 07:00 AM UTC]`;\n  const html = `<body><strong>General info:</strong>\\nWe need to update the Charms offer in the slider (Z) without TT.\\n<strong>Segments:</strong>\\nGR - All VIP users.\\nWEB SHOP - non VIPs\\n<strong>Duration:</strong>\\n${startPrefix} 07:00 AM UTC - ${endPlus1} 07:00 AM UTC<hr/><strong>EC:</strong>\\nWEB SHOP + GR -\\nZ - X1 Magical / X2 Magical packs 5* (3 reshuffles) + X5 tokens + HPs<hr/><strong>ART / COPY:</strong><hr/><strong>BA:</strong><hr/><strong>OPS:</strong>\\nZ - BG - reuse:\\n<a href=\"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1209161154820257\">link</a></body>`;\n  return [{\n    json: {\n      parentName: parentTitle,\n      parentHtml: html,\n      startOn: rawStart === rawEnd ? null : rawStart,\n      endOn: rawEnd,\n      _passThrough: { fullPrefix, baseName, parentStartOn: rawStart, parentDueOn: rawEnd, parentTitle }\n    }\n  }];\n});", "buildCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst parentInputs = $items(\"Process GR_WS_Charms_NoTT Tags\");\nreturn $input.all().flatMap((item, index) => {\n  const parentGid = $items(\"Create GR_WS_Charms_NoTT Parent Task\")[index].json.gid;\n  const passThrough = parentInputs[index].json._passThrough || {};\n  const parentTitle = passThrough.parentTitle || \"\";\n  const parentStartOn = passThrough.parentStartOn;\n  if (!parentGid) return [];\n  const econDueOn = economyDueDateFromParent(parentStartOn);\n  return [\n    {\n      json: {\n        parentGid,\n        name: `${parentTitle} - CONFIG`,\n        assigneeGid: \"1208211102953242\",\n        dueOn: econDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1201933871229088\", \"1202681320802528\"], isConfig: true }\n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: `${parentTitle} - OPS`,\n        assigneeGid: null,\n        dueOn: parentStartOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1202720677378175\"], isConfig: false }\n      }\n    }\n  ];\n});"}, "GR_WS_Charms_TT": {"label": "GR_WS_Charms_TT", "tagId": "1214608250172754", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709746", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst searchResults = $items(\"Search GR_WS_Charms_TT Tasks\");\nconst dateInfos = $items(\"Expand Date Range\");\nreturn dateInfos.flatMap((dateItem, index) => {\n  const dueOn = dateItem.json.runDateISO;\n  const tasksFound = searchResults[index].json.data || [];\n  if (tasksFound.length === 0) return [];\n  const matchingTask = tasksFound[0];\n  const rawStart = matchingTask.start_on || dueOn;\n  const rawEnd   = matchingTask.due_on   || dueOn;\n  const startPrefix = isoToDDMM(rawStart);\n  const endPrefix   = isoToDDMM(rawEnd);\n  const endPlus1    = isoToDDMM(addDays(rawEnd, 1));\n  const fullPrefix  = startPrefix === endPrefix ? startPrefix : `${startPrefix} - ${endPrefix}`;\n  const baseName    = `GR + WEB SHOP DPO Charms offer (with TT)`;\n  const parentTitle = `${fullPrefix} - ${baseName} [${startPrefix} 07:00 AM UTC - ${endPlus1} 07:00 AM UTC]`;\n  const html = `<body><strong>General info:</strong>\\nWe need to update the Charms offer in the slider (Z) with TT.\\n<strong>Segments:</strong>\\nGR - All VIP users.\\nWEB SHOP - non VIPs\\n<strong>Duration:</strong>\\n${startPrefix} 07:00 AM UTC - ${endPlus1} 07:00 AM UTC<hr/><strong>EC:</strong>\\nWEB SHOP + GR -\\nZ - X1 Magical / X2 Magical packs 5* (3 reshuffles) + X5 tokens + HPs + TT<hr/><strong>ART / COPY:</strong><hr/><strong>BA:</strong><hr/><strong>OPS:</strong>\\nZ - BG - reuse:\\n<a href=\"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1209161154820257\">link</a></body>`;\n  return [{\n    json: {\n      parentName: parentTitle,\n      parentHtml: html,\n      startOn: rawStart === rawEnd ? null : rawStart,\n      endOn: rawEnd,\n      _passThrough: { fullPrefix, baseName, parentStartOn: rawStart, parentDueOn: rawEnd, parentTitle }\n    }\n  }];\n});", "buildCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst parentInputs = $items(\"Process GR_WS_Charms_TT Tags\");\nreturn $input.all().flatMap((item, index) => {\n  const parentGid = $items(\"Create GR_WS_Charms_TT Parent Task\")[index].json.gid;\n  const passThrough = parentInputs[index].json._passThrough || {};\n  const parentTitle = passThrough.parentTitle || \"\";\n  const parentStartOn = passThrough.parentStartOn;\n  if (!parentGid) return [];\n  const econDueOn = economyDueDateFromParent(parentStartOn);\n  return [\n    {\n      json: {\n        parentGid,\n        name: `${parentTitle} - CONFIG`,\n        assigneeGid: \"1208211102953242\",\n        dueOn: econDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1201933871229088\", \"1202681320802528\"], isConfig: true }\n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: `${parentTitle} - OPS`,\n        assigneeGid: null,\n        dueOn: parentStartOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1202720677378175\"], isConfig: false }\n      }\n    }\n  ];\n});"}, "PAID_ABOVE_NoTT": {"label": "PAID_ABOVE_NoTT", "tagId": "1214608151123713", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709746", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst searchResults = $items(\"Search PAID_ABOVE_NoTT Tasks\");\nconst dateInfos = $items(\"Expand Date Range\");\nreturn dateInfos.flatMap((dateItem, index) => {\n  const dueOn = dateItem.json.runDateISO;\n  const tasksFound = searchResults[index].json.data || [];\n  if (tasksFound.length === 0) return [];\n  const matchingTask = tasksFound[0];\n  const rawStart = matchingTask.start_on || dueOn;\n  const rawEnd   = matchingTask.due_on   || dueOn;\n  const startPrefix = isoToDDMM(rawStart);\n  const endPrefix   = isoToDDMM(rawEnd);\n  const endPlus1    = isoToDDMM(addDays(rawEnd, 1));\n  const fullPrefix  = startPrefix === endPrefix ? startPrefix : `${startPrefix} - ${endPrefix}`;\n  const baseName    = `PAID ABOVE + Need Few Items Charms protocols (without TT) - GR Slider`;\n  const parentTitle = `${fullPrefix} - ${baseName} [${startPrefix} 07:00 AM UTC - ${endPlus1} 07:00 AM UTC]`;\n  const html = `<body><strong>General info:</strong>\\n2 charms DPO protocols to update in VIP AC Slider (Golden ring)<hr/><strong>EC:</strong>\\n<strong>Need a Few Items \\u2192</strong>\\nV -\\n140% more chips + Magical packs (X2/3/4)\\nPP &lt; $349.99 - 2 Reshuffles\\nPP &gt;= $349.99 - 3 Reshuffles\\n\\n<strong>Paid Above \\u2192</strong>\\nW -\\n140% more chips + MISSING 5*\\nAll segments get $99.99 PP<hr/><strong>ART / COPY:</strong><hr/><strong>BA:</strong><hr/><strong>OPS:</strong>\\nNeed few items -\\n  BG - Reuse: <a href=\"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1209621288748894\">link</a>\\n  Banner - Reuse: <a href=\"https://app.asana.com/1/54393662698285/project/1211892160452363/task/1212514263240532\">link</a>\\n\\nPaid Above -\\n  BG - Reuse - New Guaranteed 5* offer\\n  Banner - Reuse: <a href=\"https://app.asana.com/1/54393662698285/project/1202103624709695/task/1213786307548634\">link</a></body>`;\n  return [{\n    json: {\n      parentName: parentTitle,\n      parentHtml: html,\n      startOn: rawStart === rawEnd ? null : rawStart,\n      endOn: rawEnd,\n      _passThrough: { fullPrefix, baseName, parentStartOn: rawStart, parentDueOn: rawEnd, parentTitle }\n    }\n  }];\n});", "buildCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst parentInputs = $items(\"Process PAID_ABOVE_NoTT Tags\");\nreturn $input.all().flatMap((item, index) => {\n  const parentGid = $items(\"Create PAID_ABOVE_NoTT Parent Task\")[index].json.gid;\n  const passThrough = parentInputs[index].json._passThrough || {};\n  const parentTitle = passThrough.parentTitle || \"\";\n  const parentStartOn = passThrough.parentStartOn;\n  if (!parentGid) return [];\n  const econDueOn = economyDueDateFromParent(parentStartOn);\n  return [\n    {\n      json: {\n        parentGid,\n        name: `${parentTitle} - CONFIG`,\n        assigneeGid: \"1208211102953242\",\n        dueOn: econDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1201933871229088\", \"1202681320802528\"], isConfig: true }\n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: `${parentTitle} - OPS`,\n        assigneeGid: null,\n        dueOn: parentStartOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1202720677378175\"], isConfig: false }\n      }\n    }\n  ];\n});"}, "PAID_ABOVE_TT": {"label": "PAID_ABOVE_TT", "tagId": "1214608249908947", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709746", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst searchResults = $items(\"Search PAID_ABOVE_TT Tasks\");\nconst dateInfos = $items(\"Expand Date Range\");\nreturn dateInfos.flatMap((dateItem, index) => {\n  const dueOn = dateItem.json.runDateISO;\n  const tasksFound = searchResults[index].json.data || [];\n  if (tasksFound.length === 0) return [];\n  const matchingTask = tasksFound[0];\n  const rawStart = matchingTask.start_on || dueOn;\n  const rawEnd   = matchingTask.due_on   || dueOn;\n  const startPrefix = isoToDDMM(rawStart);\n  const endPrefix   = isoToDDMM(rawEnd);\n  const endPlus1    = isoToDDMM(addDays(rawEnd, 1));\n  const fullPrefix  = startPrefix === endPrefix ? startPrefix : `${startPrefix} - ${endPrefix}`;\n  const baseName    = `PAID ABOVE + Need Few Items Charms protocols (with TT) - GR Slider`;\n  const parentTitle = `${fullPrefix} - ${baseName} [${startPrefix} 07:00 AM UTC - ${endPlus1} 07:00 AM UTC]`;\n  const html = `<body><strong>General info:</strong>\\n2 charms DPO protocols to update in VIP AC Slider (Golden ring)<hr/><strong>EC:</strong>\\n<strong>Need a Few Items \\u2192</strong>\\nV -\\n140% more chips + Magical packs (X2/3/4) + TT\\nPP &lt; $349.99 - 2 Reshuffles\\nPP &gt;= $349.99 - 3 Reshuffles\\n\\n<strong>Paid Above \\u2192</strong>\\nW -\\n140% more chips + MISSING 5* + TT\\nAll segments get $99.99 PP<hr/><strong>ART / COPY:</strong><hr/><strong>BA:</strong><hr/><strong>OPS:</strong>\\nNeed few items -\\n  BG - Reuse: <a href=\"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1209621288748894\">link</a>\\n  Banner - Reuse: <a href=\"https://app.asana.com/1/54393662698285/project/1202103624709695/task/1213483979393148\">link</a>\\n\\nPaid Above -\\n  BG - Reuse - New Guaranteed 5* offer\\n  Banner - Reuse: <a href=\"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1213784192298717\">link</a></body>`;\n  return [{\n    json: {\n      parentName: parentTitle,\n      parentHtml: html,\n      startOn: rawStart === rawEnd ? null : rawStart,\n      endOn: rawEnd,\n      _passThrough: { fullPrefix, baseName, parentStartOn: rawStart, parentDueOn: rawEnd, parentTitle }\n    }\n  }];\n});", "buildCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst parentInputs = $items(\"Process PAID_ABOVE_TT Tags\");\nreturn $input.all().flatMap((item, index) => {\n  const parentGid = $items(\"Create PAID_ABOVE_TT Parent Task\")[index].json.gid;\n  const passThrough = parentInputs[index].json._passThrough || {};\n  const parentTitle = passThrough.parentTitle || \"\";\n  const parentStartOn = passThrough.parentStartOn;\n  if (!parentGid) return [];\n  const econDueOn = economyDueDateFromParent(parentStartOn);\n  return [\n    {\n      json: {\n        parentGid,\n        name: `${parentTitle} - CONFIG`,\n        assigneeGid: \"1208211102953242\",\n        dueOn: econDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1201933871229088\", \"1202681320802528\"], isConfig: true }\n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: `${parentTitle} - OPS`,\n        assigneeGid: null,\n        dueOn: parentStartOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1202720677378175\"], isConfig: false }\n      }\n    }\n  ];\n});"}, "GoldDash": {"label": "Gold Dash", "tagId": "1214608150079257,1214608150079258,1214608150079259,1214608150079260,1214608150079261", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709746", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst searchResults = $items(\"Search Gold Dash Tasks\");\nconst dateInfos = $items(\"Expand Date Range\");\nconst TAG_LABELS = {\n  \"1214608150079257\": \"Generic\",\n  \"1214608150079258\": \"Club\",\n  \"1214608150079259\": \"Adventure\",\n  \"1214608150079260\": \"Lottery\",\n  \"1214608150079261\": \"Charms\"\n};\nreturn dateInfos.flatMap((dateItem, index) => {\n  const dueOn = dateItem.json.runDateISO;\n  const tasksFound = searchResults[index].json.data || [];\n  if (tasksFound.length === 0) return [];\n  const matchingTask = tasksFound[0];\n  const rawStart = matchingTask.start_on || dueOn;\n  const rawEnd   = matchingTask.due_on   || dueOn;\n  const startPrefix = isoToDDMM(rawStart);\n  const endPrefix   = isoToDDMM(rawEnd);\n  const endPlus1    = isoToDDMM(addDays(rawEnd, 1));\n  const fullPrefix  = startPrefix === endPrefix ? startPrefix : `${startPrefix} - ${endPrefix}`;\n  const tagGids = (matchingTask.tags || []).map(t => t.gid).filter(g => TAG_LABELS[g]);\n  return tagGids.map(tagGid => {\n    const label       = TAG_LABELS[tagGid];\n    const baseName    = `Gold Dash offer (${label} Dash)`;\n    const parentTitle = `${fullPrefix} - ${baseName} [${startPrefix} 07:15 - ${endPlus1} 07:15]`;\n    const html = `<body><strong>General info:</strong>\\nWe will sell the Gold Dash (${label} Dash) in AC slider.<hr/><strong>EC:</strong>\\nOffer type - C\\nOffer Duration - ${startPrefix} 07:15 - ${endPlus1} 07:15\\nRR ID:<hr/><strong>ART / COPY:</strong>\\nNew design - banners + BG for the external shops.\\nReference: <a href=\"https://app.asana.com/1/54393662698285/task/1213203708542369\">link</a><hr/><strong>OPS:</strong>\\nFollow general info.\\nC - New BG</body>`;\n    return {\n      json: {\n        parentName: parentTitle,\n        parentHtml: html,\n        tagLabel: label,\n        startOn: rawStart === rawEnd ? null : rawStart,\n        endOn: rawEnd,\n        _passThrough: { fullPrefix, baseName, tagLabel: label, parentStartOn: rawStart, parentDueOn: rawEnd, parentTitle }\n      }\n    };\n  });\n});", "buildCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst artNotesText=\"\\ud83c\\udfa8 Design Tips:\\n\\u2022 \\n\\n---------------------------------------------------\\nBody:\\n\\nBadge 1: <Multiplier>\\nBadge 2:\\nBadge 3:\\n\\nCTA:\";\nconst parentInputs = $items(\"Process Gold Dash Tags\");\nreturn $input.all().flatMap((item, index) => {\n  const parentGid = $items(\"Create Gold Dash Parent Task\")[index].json.gid;\n  const passThrough = parentInputs[index].json._passThrough || {};\n  const parentTitle = passThrough.parentTitle || \"\";\n  const parentStartOn = passThrough.parentStartOn;\n  if (!parentGid) return [];\n  const econDueOn = economyDueDateFromParent(parentStartOn);\n  const copyDueOn = copyDueDateFromParent(parentStartOn);\n  return [\n    { json: { parentGid, name: `${parentTitle} - CONFIG`,                  assigneeGid: \"1208211102953242\", dueOn: econDueOn,    notes: \"\",            _passThrough: { projectGids: [\"1201933871229088\", \"1202681320802528\"], isConfig: true  } } },\n    { json: { parentGid, name: `${parentTitle} - Copy`,                    assigneeGid: \"1203098851994102\",   dueOn: copyDueOn,    notes: \"\",            _passThrough: { projectGids: [\"1202805118467140\"],                  isConfig: false } } },\n    { json: { parentGid, name: `${parentTitle} - ANN - ART (WS)`,          assigneeGid: null,                  dueOn: parentStartOn, notes: artNotesText, _passThrough: { projectGids: [\"1202103624709698\", \"1202103624709695\"], isConfig: false } } },\n    { json: { parentGid, name: `${parentTitle} - ANN - ART (GR)`,          assigneeGid: null,                  dueOn: parentStartOn, notes: artNotesText, _passThrough: { projectGids: [\"1202103624709698\", \"1202103624709695\"], isConfig: false } } },\n    { json: { parentGid, name: `${parentTitle} - BG`,                      assigneeGid: null,                  dueOn: parentStartOn, notes: artNotesText, _passThrough: { projectGids: [\"1202103624709698\", \"1202103624709695\"], isConfig: false } } },\n    { json: { parentGid, name: `${parentTitle} - OPS`,                     assigneeGid: null,                  dueOn: parentStartOn, notes: \"\",            _passThrough: { projectGids: [\"1202720677378175\"],                     isConfig: false } } },\n    { json: { parentGid, name: `${parentTitle} - OPS - ADD ID to eco task`, assigneeGid: null,                 dueOn: parentStartOn, notes: \"\",            _passThrough: { projectGids: [\"1202720677378175\"],                     isConfig: false } } }\n  ];\n});"}, "PassDeluxe": {"label": "Pass Deluxe", "tagId": "1214608152016626", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709746", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst searchResults = $items(\"Search Pass Deluxe Tasks\");\nconst dateInfos = $items(\"Expand Date Range\");\nreturn dateInfos.flatMap((dateItem, index) => {\n  const dueOn = dateItem.json.runDateISO;\n  const tasksFound = searchResults[index].json.data || [];\n  if (tasksFound.length === 0) return [];\n  const matchingTask = tasksFound[0];\n  const rawStart = matchingTask.start_on || dueOn;\n  const rawEnd   = matchingTask.due_on   || dueOn;\n  const startPrefix = isoToDDMM(rawStart);\n  const endPrefix   = isoToDDMM(rawEnd);\n  const endPlus1    = isoToDDMM(addDays(rawEnd, 1));\n  const duePlus2    = isoToDDMM(addDays(rawEnd, 2));\n  const duePlus3    = isoToDDMM(addDays(rawEnd, 3));\n  const fullPrefix  = startPrefix === endPrefix ? startPrefix : `${startPrefix} - ${endPrefix}`;\n  const baseName    = `D2C - WEB SHOP + GR- Pass Deluxe DPO`;\n  const parentTitle = `${fullPrefix} ${baseName}`;\n  const html = `<body><strong>General info:</strong>\\nUpdate the Pass DPO config. Sell the Deluxe Pass with free pass points on top.<hr/><strong>EC:</strong>\\nC - Pass Deluxe + Free Pass Points\\nOn ${endPrefix} 07:00 AM UTC - please change to Y\\nY duration: ${duePlus2} 07:00 - ${duePlus3} 07:00 AM UTC<hr/><strong>ART / COPY:</strong>\\nBanners: New design. Theme: see wiki <a href=\"https://huuugegames.atlassian.net/wiki/spaces/HC/pages/1164378113/HC+2026\">link</a>\\nReference for last D2C banners:\\n  GR banner: <a href=\"https://app.asana.com/1/54393662698285/project/1202103624709695/task/1213182785539143\">link</a>\\n  Webshop banner: <a href=\"https://app.asana.com/1/54393662698285/project/1202103624709695/task/1213182785539128\">link</a>\\nBG: Create a BG aligned to the pass theme of this season. Previous BG: <a href=\"https://app.asana.com/1/54393662698285/project/1202103624709695/task/1213182787014432\">link</a><hr/><strong>OPS:</strong>\\nFollow general info.\\nC - New BG\\n  Offer Duration - ${startPrefix} 07:00 - ${endPlus1} 07:00 AM UTC\\n\\nOn ${duePlus2} 07:00 AM UTC - please change to Y\\nDuration to Y - ${duePlus2} 07:00 - ${duePlus3} 07:00 AM UTC</body>`;\n  return [{\n    json: {\n      parentName: parentTitle,\n      parentHtml: html,\n      startOn: rawStart === rawEnd ? null : rawStart,\n      endOn: rawEnd,\n      _passThrough: { fullPrefix, baseName, parentStartOn: rawStart, parentDueOn: rawEnd, parentTitle }\n    }\n  }];\n});", "buildCode": "function isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction addDays(iso,days){if(!iso)return null;const[y,m,d]=iso.split('-').map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return dt.toISOString().split('T')[0];}\nfunction economyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split('T')[0];}\nfunction copyDueDateFromParent(p){if(!p)return null;const[y,m,d]=p.split('-').map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-3);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split('T')[0];}\nconst artNotesText=\"\\ud83c\\udfa8 Design Tips:\\n\\u2022 \\n\\n---------------------------------------------------\\nBody:\\n\\nBadge 1: <Multiplier>\\nBadge 2:\\nBadge 3:\\n\\nCTA:\";\nconst parentInputs = $items(\"Process Pass Deluxe Tags\");\nreturn $input.all().flatMap((item, index) => {\n  const parentGid = $items(\"Create Pass Deluxe Parent Task\")[index].json.gid;\n  const passThrough = parentInputs[index].json._passThrough || {};\n  const parentTitle = passThrough.parentTitle || \"\";\n  const parentStartOn = passThrough.parentStartOn;\n  const parentDueOn = passThrough.parentDueOn;\n  const fullPrefix = passThrough.fullPrefix || \"\";\n  if (!parentGid) return [];\n  const econDueOn = economyDueDateFromParent(parentStartOn);\n  const copyDueOn = copyDueDateFromParent(parentStartOn);\n  const duePlus2Iso = addDays(parentDueOn, 2);\n  const duePlus2Pref = isoToDDMM(duePlus2Iso);\n  return [\n    { json: { parentGid, name: `${parentTitle} - Config`,                                                      assigneeGid: \"1208211102953242\", dueOn: econDueOn,    notes: \"\",            _passThrough: { projectGids: [\"1201933871229088\", \"1202681320802528\"], isConfig: true  } } },\n    { json: { parentGid, name: `${fullPrefix} D2C - WEB SHOP + GR- Pass Deluxe Banner - Copy`,                 assigneeGid: \"1203098851994102\",   dueOn: copyDueOn,    notes: \"\",            _passThrough: { projectGids: [\"1202805118467140\"],                  isConfig: false } } },\n    { json: { parentGid, name: `${fullPrefix} D2C - WEB SHOP - Pass Deluxe Banner - ART`,                      assigneeGid: null,                  dueOn: parentStartOn, notes: artNotesText, _passThrough: { projectGids: [\"1202103624709698\"],                isConfig: false } } },\n    { json: { parentGid, name: `${fullPrefix} D2C - GR - Pass Deluxe Banner - ART`,                            assigneeGid: null,                  dueOn: parentStartOn, notes: artNotesText, _passThrough: { projectGids: [\"1202103624709698\"],                isConfig: false } } },\n    { json: { parentGid, name: `${fullPrefix} D2C - GR + Webshop - Pass Deluxe - BG - ART`,                    assigneeGid: null,                  dueOn: parentStartOn, notes: artNotesText, _passThrough: { projectGids: [\"1202103624709698\"],                isConfig: false } } },\n    { json: { parentGid, name: `${parentTitle} - OPS`,                                                         assigneeGid: null,                  dueOn: parentStartOn, notes: \"\",            _passThrough: { projectGids: [\"1202720677378175\"],                     isConfig: false } } },\n    { json: { parentGid, name: `${duePlus2Pref} D2C - WEB SHOP + GR- Pass Deluxe DPO - Change to Y - CONFIG`,  assigneeGid: \"1208211102953242\", dueOn: econDueOn,    notes: \"\",            _passThrough: { projectGids: [\"1201933871229088\", \"1202681320802528\"], isConfig: true  } } },\n    { json: { parentGid, name: `${duePlus2Pref} D2C - WEB SHOP + GR- Pass Deluxe DPO - Change to Y - OPS`,     assigneeGid: null,                  dueOn: duePlus2Iso,  notes: \"\",            _passThrough: { projectGids: [\"1202720677378175\"],                     isConfig: false } } }\n  ];\n});"}}}
+</script>
+
+<script>
+const CLIENT_ID     = "1214940964091051";
+const CLIENT_SECRET = "20d6386dcb65b65a8043630f2121f600";
+const REDIRECT_URI  = window.location.href.split("?")[0].split("#")[0];
+const ASANA_AUTH    = "https://app.asana.com/-/oauth_authorize";
+const ASANA_TOKEN   = "https://app.asana.com/-/oauth_token";
+const ASANA_API     = "https://app.asana.com/api/1.0";
+
+let accessToken = localStorage.getItem("asana_token") || null;
+
+const SPEC = JSON.parse(document.getElementById("pipeline-spec").textContent);
+const WORKSPACE_GID = SPEC.workspaceGid;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+function loginWithAsana() {
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem("oauth_state", state);
+  window.location.href = `${ASANA_AUTH}?${new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code", state })}`;
+}
+async function exchangeCode(code) {
+  const res = await fetch(ASANA_TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "authorization_code", client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, code }) });
+  const data = await res.json();
+  if (data.access_token) { accessToken = data.access_token; localStorage.setItem("asana_token", accessToken); return true; }
+  return false;
+}
+function logout() {
+  localStorage.removeItem("asana_token");
+  accessToken = null;
+  document.getElementById("appArea").style.display = "none";
+  document.getElementById("loginArea").style.display = "block";
+}
+
+// ── ASANA API HELPERS ────────────────────────────────────────────────────
+async function asanaGet(path) {
+  const res = await fetch(`${ASANA_API}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPost(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPut(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── N8N CODE-NODE SHIM ───────────────────────────────────────────────────
+// Runs the workflow's original Code-node bodies verbatim, so business logic
+// (HTML templates, subtask lists, date math) stays byte-identical to n8n.
+function runItemCode(code, jsonObj) {
+  return new Function("$json", code)(jsonObj);
+}
+function runBatchCode(code, itemsMap) {
+  const $items = (name) => itemsMap[name] || [];
+  const $input = { all: () => itemsMap.__input || [] };
+  return new Function("$items", "$input", code)($items, $input);
+}
+
+// ── DATE LIST ────────────────────────────────────────────────────────────
+function buildDatesList(rangeStart, rangeEnd, specificDates) {
+  const items = runItemCode(SPEC.buildDatesCode, { rangeStart, rangeEnd, specificDates });
+  return items.map(i => i.json.dueOn);
+}
+
+// ── PIPELINE UI ──────────────────────────────────────────────────────────
+const PIPELINE_LABELS = {
+  RO: "RO", MG: "MG", TT: "TT",
+  GR_WS_Charms_NoTT: "GR/WS Charms (No TT)",
+  GR_WS_Charms_TT: "GR/WS Charms (TT)",
+  PAID_ABOVE_NoTT: "Paid Above (No TT)",
+  PAID_ABOVE_TT: "Paid Above (TT)",
+  GoldDash: "Gold Dash",
+  PassDeluxe: "Pass Deluxe",
+};
+const pipelinesEl = document.getElementById("pipelines");
+Object.keys(SPEC.pipelines).forEach((key) => {
+  const div = document.createElement("div");
+  div.className = "pipe-item";
+  div.innerHTML = `<input type="checkbox" id="pipe_${key}" checked><label for="pipe_${key}">${PIPELINE_LABELS[key] || key}</label>`;
+  pipelinesEl.appendChild(div);
+});
+function setAllPipelines(v) {
+  Object.keys(SPEC.pipelines).forEach(key => document.getElementById(`pipe_${key}`).checked = v);
+}
+
+// ── LOG PANEL ────────────────────────────────────────────────────────────
+const logEl = document.getElementById("log");
+function log(text, cls) {
+  logEl.style.display = "block";
+  const div = document.createElement("div");
+  div.className = "line" + (cls ? " " + cls : "");
+  div.textContent = text;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ── PIPELINE RUNNER ──────────────────────────────────────────────────────
+async function runPipeline(key, dates) {
+  const p = SPEC.pipelines[key];
+  const label = p.label;
+  log(`▶ ${label}: searching ${dates.length} date(s)…`, "muted");
+
+  const searchResultsCtx = [];
+  for (const d of dates) {
+    const q = new URLSearchParams({
+      "tags.any": p.tagId,
+      "start_on.before": d,
+      "start_on.after": d,
+      "opt_fields": "name,tags.name,start_on,due_on",
+    });
+    const res = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
+    searchResultsCtx.push({ json: res });
+    await sleep(120);
+  }
+  const dateInfosCtx = dates.map(d => ({ json: { runDateISO: d } }));
+
+  const processedItems = runBatchCode(p.processCode, {
+    [`Search ${label} Tasks`]: searchResultsCtx,
+    "Expand Date Range": dateInfosCtx,
+  });
+
+  if (processedItems.length === 0) {
+    log(`  ${label}: no matching planning task found for any selected date — skipped.`, "warn");
+    return;
+  }
+  if (processedItems.length < dates.length) {
+    log(`  ${label}: ${dates.length - processedItems.length} date(s) had no matching planning task and were skipped.`, "warn");
+  }
+
+  const parentGidCtx = [];
+  for (const item of processedItems) {
+    try {
+      const created = await asanaPost("/tasks", {
+        name: item.json.parentName,
+        workspace: WORKSPACE_GID,
+        projects: [p.parentProjectId],
+      });
+      const gid = created.data.gid;
+      parentGidCtx.push({ json: { gid } });
+      await sleep(120);
+
+      await asanaPut(`/tasks/${gid}`, {
+        start_on: item.json.startOn,
+        due_on: item.json.endOn,
+        custom_fields: { [p.customFieldId]: p.customFieldValue },
+      });
+      await sleep(120);
+
+      await asanaPut(`/tasks/${gid}`, { html_notes: item.json.parentHtml });
+      await sleep(120);
+
+      log(`  ✓ ${label}: created parent "${item.json.parentName}"`, "ok");
+    } catch (e) {
+      parentGidCtx.push({ json: { gid: null } });
+      log(`  ✗ ${label}: failed to create parent "${item.json.parentName}" — ${e.message}`, "err");
+    }
+  }
+
+  const subtaskDefs = runBatchCode(p.buildCode, {
+    [`Process ${label} Tags`]: processedItems,
+    [`Create ${label} Parent Task`]: parentGidCtx,
+    __input: new Array(processedItems.length).fill({ json: {} }),
+  });
+
+  const subtaskResults = [];
+  for (const def of subtaskDefs) {
+    const j = def.json;
+    if (!j.parentGid) { subtaskResults.push(null); continue; }
+    try {
+      const created = await asanaPost(`/tasks/${j.parentGid}/subtasks`, {
+        name: j.name,
+        assignee: j.assigneeGid,
+        due_on: j.dueOn,
+        notes: j.notes,
+      });
+      subtaskResults.push({ gid: created.data.gid });
+      log(`    ✓ subtask "${j.name}"`, "ok");
+    } catch (e) {
+      subtaskResults.push(null);
+      log(`    ✗ subtask "${j.name}" — ${e.message}`, "err");
+    }
+    await sleep(120);
+  }
+
+  const projectRows = subtaskDefs.flatMap((def, idx) => {
+    const res = subtaskResults[idx];
+    if (!res) return [];
+    const pass = def.json._passThrough || {};
+    const projectGids = pass.projectGids || [];
+    const isConfig = pass.isConfig || false;
+    return projectGids.map(pGid => ({ taskGid: res.gid, projectGid: pGid, isConfig }));
+  });
+
+  for (const row of projectRows) {
+    try {
+      if (row.isConfig && row.projectGid === p.configProjectId) {
+        await asanaPost(`/sections/${p.configSectionId}/addTask`, { task: row.taskGid });
+      } else {
+        await asanaPost(`/tasks/${row.taskGid}/addProject`, { project: row.projectGid });
+      }
+      await sleep(120);
+    } catch (e) {
+      log(`    ✗ project/section link failed for a subtask — ${e.message}`, "err");
+    }
+  }
+
+  log(`■ ${label}: done.`, "muted");
+}
+
+async function runAll() {
+  const rangeStart = document.getElementById("rangeStart").value;
+  const rangeEnd = document.getElementById("rangeEnd").value;
+  const specificDates = document.getElementById("specificDates").value.trim();
+
+  const dates = buildDatesList(rangeStart, rangeEnd, specificDates);
+  if (dates.length === 0) {
+    alert("Enter a date range or specific dates first.");
+    return;
+  }
+
+  const selected = Object.keys(SPEC.pipelines).filter(key => document.getElementById(`pipe_${key}`).checked);
+  if (selected.length === 0) {
+    alert("Select at least one pipeline.");
+    return;
+  }
+
+  const labels = selected.map(k => PIPELINE_LABELS[k] || k).join(", ");
+  if (!confirm(`This will create real Asana tasks.\n\nDates: ${dates.join(", ")}\nPipelines: ${labels}\n\nContinue?`)) return;
+
+  const btn = document.getElementById("runBtn");
+  btn.disabled = true;
+  logEl.innerHTML = "";
+  logEl.style.display = "block";
+  log(`Starting run for ${dates.length} date(s) × ${selected.length} pipeline(s)…`, "muted");
+
+  for (const key of selected) {
+    try {
+      await runPipeline(key, dates);
+    } catch (e) {
+      log(`✗ ${PIPELINE_LABELS[key] || key}: ${e.message}`, "err");
+    }
+  }
+
+  log("All done.", "ok");
+  btn.disabled = false;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code"), state = params.get("state"), error = params.get("error");
+  if (code || error) window.history.replaceState({}, document.title, window.location.pathname);
+  if (error) {
+    document.getElementById("oauthError").style.display = "block";
+    document.getElementById("oauthError").textContent = `Asana login error: ${error}`;
+    return;
+  }
+  if (code) {
+    const saved = sessionStorage.getItem("oauth_state");
+    if (state !== saved) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "OAuth state mismatch.";
+      return;
+    }
+    sessionStorage.removeItem("oauth_state");
+    const ok = await exchangeCode(code);
+    if (!ok) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "Failed to exchange login code.";
+      return;
+    }
+  }
+  if (accessToken) {
+    document.getElementById("loginArea").style.display = "none";
+    document.getElementById("appArea").style.display = "block";
+    try {
+      const me = await asanaGet("/users/me?opt_fields=name");
+      document.getElementById("userLabel").textContent = `Signed in as ${me.data.name}`;
+    } catch (e) { /* ignore */ }
+  } else {
+    document.getElementById("loginArea").style.display = "block";
+    document.getElementById("appArea").style.display = "none";
+  }
+}
+init();
+</script>
+</body>
+</html>
