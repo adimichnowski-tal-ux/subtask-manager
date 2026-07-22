@@ -505,6 +505,13 @@
         <div class="card-arrow">Open tool <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></div>
       </a>
 
+      <a class="tool-card" onclick="openTool('instructions'); return false;" href="#">
+        <div class="card-tag tag-green">✦ Guide</div>
+        <div class="card-name">How to use these tools</div>
+        <div class="card-desc">Naming conventions, tag references, and walkthrough videos from Nikita's automation guide.</div>
+        <div class="card-arrow">Open tool <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></div>
+      </a>
+
     </div>
 
     <div class="home-footer">Built for Huuuge Games Promo Calendar team</div>
@@ -691,6 +698,104 @@
       <button class="btn-primary" onclick="generateDesc()">✦ Generate &amp; push to Asana</button>
     </div>
     <div class="status" id="td-status"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ INSTRUCTIONS ══════════════════════════════ -->
+<div class="page" id="page-instructions">
+  <div class="tool-header">
+    <button class="back-btn" onclick="goHome()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 4L6 8l4 4"/></svg>
+      All tools
+    </button>
+    <div class="header-divider"></div>
+    <span class="header-tool-name">How to use these tools</span>
+    <span class="header-tag" style="margin-left:auto; font-size:11px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; padding:3px 10px; border-radius:99px; background:var(--accent-green-bg); color:var(--accent-green);">Guide</span>
+  </div>
+
+  <div class="tool-body">
+    <h2 class="tool-title">How to use these tools</h2>
+    <p class="tool-desc">Naming conventions and tag references from Nikita's automation guide, so tasks come out named and tagged correctly. When in doubt, always use the <a href="https://docs.google.com/document/d/1S0zinq9Og9UBHLJFpa1mGNT9lreXSG6nOzd7vRpDryA/edit" target="_blank" rel="noopener">tag &amp; naming reference doc</a> for the exact tag to assign in Asana.</p>
+
+    <div class="section-block" style="margin-top:0;">
+      <div class="section-block-head">Offers trigger</div>
+      <div class="card" style="padding:16px 20px;">
+        <ul style="padding-left:18px; font-size:14px; line-height:1.7; color:var(--text);">
+          <li><strong>Rolling Offer (RO):</strong> name the placeholder like <code>Rolling Offer [decreasing price]</code> or <code>Rolling Offer [Tokens focus]</code> — or just <code>Rolling Offer [Generic]</code> if there's nothing specific.</li>
+          <li><strong>MG DPO vs. Mini Game:</strong> the MG DPO tag here is a different thing from "Mini Game" — Mini Game the feature lives in the <strong>Features trigger</strong>, not here. Using the wrong one creates the wrong task.</li>
+          <li>Apply the full event date range in the placeholder itself — the tool creates the task for the whole duration and applies matching dates to the subtasks.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-block-head">Features trigger</div>
+      <div class="card" style="padding:16px 20px;">
+        <ul style="padding-left:18px; font-size:14px; line-height:1.7; color:var(--text);">
+          <li>For most features, just use the whole event's date range in the placeholder — the flow handles the rest.</li>
+          <li><strong>Adventure Mode:</strong> <code>[Theme Here] Adventure Mode</code> — specifying a theme auto-creates a Marketing Art task assigned to Daria.</li>
+          <li><strong>Trendy Time:</strong> <code>Trendy_Time [Theme Here]</code></li>
+          <li><strong>Mission:</strong> <code>[Mission type] Mission</code> — e.g. <code>[Bets] Mission</code></li>
+          <li><strong>Dash / Turbo Dash:</strong> <code>Dash [Dash types here]</code> — e.g. <code>Dash [Charms, Generic, VIP]</code> creates all the listed dashes, each with its own config and banners.</li>
+          <li><strong>Mini Game reskins:</strong> put a style name in brackets (e.g. <code>[FIFA style]</code>) to auto-create a Marketing Art task assigned to Daria.</li>
+          <li><strong>Lottery Reel Boost:</strong> <code>Lottery Reel Boost - [Rewards here] on [Reels here] reel</code></li>
+          <li><strong>Trading Promo:</strong> <code>Trading Promo with [Text here]</code></li>
+          <li><strong>Trading Promo (Open Trades):</strong> <code>Trading Promo with [Text here] and open trades up to phase [phase number]</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-block-head">Club &amp; Conquest trigger</div>
+      <div class="card" style="padding:16px 20px;">
+        <ul style="padding-left:18px; font-size:14px; line-height:1.7; color:var(--text);">
+          <li>Choose the required Club Event / Conquest tag, assign it to a placeholder, set the date range, then run.</li>
+          <li>For a Conquest longer than 1 day, the placeholder needs a Start <em>and</em> End date covering the whole period — otherwise the task won't be created for the full duration.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-block-head">Shop &amp; PO trigger</div>
+      <div class="card" style="padding:16px 20px;">
+        <ul style="padding-left:18px; font-size:14px; line-height:1.7; color:var(--text);">
+          <li>Fill the placeholder with the correct tag from the reference doc, set the date range, then run.</li>
+          <li>A separate 150%-baseline variant exists for future use if the standard baseline ever needs to change — not part of this tool yet.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-block-head">Art Tasks &amp; Placements</div>
+      <div class="card" style="padding:16px 20px;">
+        <ul style="padding-left:18px; font-size:14px; line-height:1.7; color:var(--text);">
+          <li>Pick the date range you want to compose Art for and run — it gathers every Art task scheduled in that range, including WS/GR banners, into each Placement task's notes, and highlights any reuse banners.</li>
+          <li>Known limitation: it won't pull in Art that's still ongoing from before the range starts (you can still see that from the date range already in the placement's title).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-block-head">Not yet available here</div>
+      <div class="card" style="padding:16px 20px;">
+        <ul style="padding-left:18px; font-size:14px; line-height:1.7; color:var(--text);">
+          <li><strong>Copy Placements Tasks</strong> and <strong>Community (Charms 22)</strong> automations exist as n8n flows but haven't been turned into web tools yet.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-block-head">Walkthrough videos (Slack login required)</div>
+      <div class="card" style="padding:16px 20px;">
+        <ul style="padding-left:18px; font-size:14px; line-height:1.7; color:var(--text);">
+          <li><a href="https://huuuge.slack.com/files/U040UN4TGE5/F0AT9MJL3SA/shop_and_po_process.mp4" target="_blank" rel="noopener">Shop &amp; PO process</a></li>
+          <li><a href="https://huuuge.slack.com/files/U040UN4TGE5/F0B2MN9NEUD/placements.mp4" target="_blank" rel="noopener">Art Tasks &amp; Placements</a></li>
+          <li><a href="https://huuuge.slack.com/files/U040UN4TGE5/F0B53KK6M1V/features_automation.mp4" target="_blank" rel="noopener">Features automation</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="tool-desc" style="margin-top:24px;">Full history and any new updates from Nikita: <a href="https://huuuge.slack.com/archives/C0AU4P31LBS" target="_blank" rel="noopener">#n8n_autoamtion on Slack</a>.</p>
   </div>
 </div>
 
