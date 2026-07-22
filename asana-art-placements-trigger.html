@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asana Art Tasks &amp; Placements</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0c0e; --surface: #13151a; --surface2: #1c1f27;
+    --border: rgba(255,255,255,0.07); --border-strong: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7d86;
+    --accent: #9b8cff; --accent-hover: #b0a4ff;
+    --success: #6ae8a0; --success-bg: rgba(106,232,160,0.08);
+    --danger: #e87a6a; --danger-bg: rgba(232,122,106,0.08);
+    --warn: #e8b46a; --warn-bg: rgba(232,180,106,0.08);
+  }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px 80px; position: relative; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 700px; height: 400px; background: radial-gradient(ellipse, rgba(155,140,255,0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  .wrapper { width: 100%; max-width: 680px; position: relative; z-index: 1; }
+  header { margin-bottom: 40px; text-align: center; }
+  .logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--surface2); border: 1px solid var(--border-strong); border-radius: 12px; margin-bottom: 20px; font-size: 20px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 12px; margin: 0 0 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-strong);
+    background: var(--surface2); color: var(--text); font-size: 14px; margin-bottom: 14px; font-family: 'DM Mono', monospace;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .hint { font-size: 12px; color: var(--muted); margin: -8px 0 14px; line-height: 1.4; }
+  button.primary {
+    width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent);
+    color: #0b0c0e; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .userbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: var(--muted); }
+  .userbar a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .userbar a:hover { text-decoration: underline; }
+  #loginArea { text-align: center; }
+  #loginArea .card { text-align: left; }
+  #loginArea p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  #oauthError { display: none; background: var(--danger-bg); color: var(--danger); border-radius: 8px; padding: 12px 14px; font-size: 13px; margin-bottom: 16px; }
+  #appArea { display: none; }
+  #log {
+    margin-top: 8px; max-height: 320px; overflow-y: auto; background: #08090b; border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.6;
+  }
+  #log .line { white-space: pre-wrap; word-break: break-word; }
+  #log .ok { color: var(--success); }
+  #log .err { color: var(--danger); }
+  #log .warn { color: var(--warn); }
+  #log .muted { color: var(--muted); }
+  footer { margin-top: 32px; text-align: center; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <div class="logo-mark">⚡</div>
+    <h1>Asana Art Tasks &amp; Placements</h1>
+    <div class="sub">Runs the "Art Tasks to Placements" automation directly against the Asana API.</div>
+  </header>
+
+  <div id="oauthError"></div>
+
+  <div id="loginArea">
+    <div class="card">
+      <h2>Connect your Asana account</h2>
+      <p>Sign in with Asana so tasks are updated under your own account.</p>
+      <button class="primary" onclick="loginWithAsana()">Login with Asana</button>
+    </div>
+  </div>
+
+  <div id="appArea">
+    <div class="userbar">
+      <span id="userLabel"></span>
+      <a onclick="logout()">Log out</a>
+    </div>
+
+    <div class="card">
+      <h2>Dates</h2>
+      <div class="row">
+        <div>
+          <label for="rangeStart">Range start</label>
+          <input type="date" id="rangeStart">
+        </div>
+        <div>
+          <label for="rangeEnd">Range end</label>
+          <input type="date" id="rangeEnd">
+        </div>
+      </div>
+      <div class="hint">Finds Placement tasks (tagged for this workflow) due in this range, then rebuilds each one's linked Art / Community / Info Banner / GR+WS reuse-banner notes from that day's Design Space and Promo Calendar tasks.</div>
+    </div>
+
+    <button class="primary" id="runBtn" onclick="runAll()">Run</button>
+    <div id="log" style="display:none;"></div>
+  </div>
+
+  <footer>Powered by Asana API</footer>
+</div>
+
+<script id="pipeline-spec" type="application/json">
+{"workspaceGid": "54393662698285", "placementTagId": "1214594806353169", "artProjectId": "1202103624709698", "communityProjectId": "1202103624709695", "placementOptFields": "name,due_on,start_on,projects.name,html_notes,tags.name", "artOptFields": "name,due_on,start_on,projects.gid,projects.name,parent.name,parent.gid,custom_fields.gid,custom_fields.enum_value.gid,custom_fields.enum_value.name,completed", "communityOptFields": "name,due_on,start_on,projects.gid,projects.name,parent.name,parent.gid,custom_fields.gid,custom_fields.enum_value.gid,custom_fields.enum_value.name,completed,html_notes", "prepSearchDatesCode": "const rangeStart = $json.rangeStart;\nconst rangeEnd   = $json.rangeEnd;\n\nconst shift = (yyyy_mm_dd, days) => {\n  const d = new Date(yyyy_mm_dd + \"T00:00:00Z\");\n  d.setUTCDate(d.getUTCDate() + days);\n  return d.toISOString().slice(0, 10);\n};\n\nreturn [{\n  json: {\n    rangeStart,\n    rangeEnd,\n    dueAfter:  shift(rangeStart, -1),\n    dueBefore: shift(rangeEnd,    1),\n  }\n}];", "splitPlacementsCode": "const data = $json.data || [];\nreturn data\n  .filter(p => p && p.due_on)\n  .map(p => ({ json: p }));", "buildNotesCode": "const placement = $('Split Placements').item.json;\nconst artRaw    = $('Get Art Tasks').item.json?.data || [];\nconst commRaw   = $('Get Community Candidates').item.json?.data || [];\n\n// ---------- Config ----------\nconst EXCLUDED_PROJECTS = new Set([\n  \"1209668783531955\",   // existing exclusion\n  \"1203480063402305\",   // SM content calendar -> ignore art tasks that live here\n  \"1204064383824853\",   // Braze - promoted in -> ignore Braze/email promo art\n]);\nconst TYPE_OF_ISSUE_CF = \"1202103624709739\";\nconst COMMUNITY_OPT    = \"1202103624709744\";\nconst INFO_BANNER_OPT  = \"1202838350063878\";\n\n// Bucketing order matters: GR+WS is evaluated FIRST, then PO/DPO, then general.\nconst GR_WS_RE  = /\\b(golden\\s+ring|d2c|web\\s*shop|ws|gr|vip)\\b/i;\nconst PO_DPO_RE = /\\b(po|dpo)\\b/i;\n\n// Background-art tasks are dropped from the list entirely.\nconst BG_RE        = /\\bbg\\b/i;\n// Cancelled tasks (e.g. \"**Cancelled, it will be reused**\") are treated as absent.\nconst CANCELLED_RE = /cancell?ed/i;\n\nconst escapeHtml = (s) => String(s == null ? \"\" : s)\n  .replace(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]/g, \"\")\n  .replace(/&/g, \"&amp;\")\n  .replace(/</g, \"&lt;\")\n  .replace(/>/g, \"&gt;\")\n  .replace(/\"/g, \"&quot;\")\n  .replace(/'/g, \"&#39;\");\n\nconst decodeHtml = (s) => String(s == null ? \"\" : s)\n  .replace(/&amp;/g, \"&\")\n  .replace(/&lt;/g, \"<\")\n  .replace(/&gt;/g, \">\")\n  .replace(/&quot;/g, '\"')\n  .replace(/&#39;/g, \"'\");\n\nconst hasTypeOfIssue = (t, optGid) =>\n  Array.isArray(t.custom_fields) && t.custom_fields.some(cf =>\n    String(cf.gid) === TYPE_OF_ISSUE_CF &&\n    cf.enum_value && String(cf.enum_value.gid) === optGid\n  );\n\nconst inExcludedProject = (t) =>\n  Array.isArray(t.projects) && t.projects.some(p => EXCLUDED_PROJECTS.has(String(p.gid)));\n\nconst isBg        = (t) => BG_RE.test(t.name || \"\");\nconst isCancelled = (t) => CANCELLED_RE.test(t.name || \"\");\n\n// ---------- Art tasks (Design Space) ----------\nconst artTasks = artRaw.filter(t => {\n  if (!t || !t.gid) return false;\n  if (inExcludedProject(t)) return false;   // SM content calendar etc.\n  if (isBg(t)) return false;                // drop BG art\n  if (isCancelled(t)) return false;         // drop cancelled art\n  return true;\n});\nconst artGids = new Set(artTasks.map(t => String(t.gid)));\n\n// ---------- Community / Info-banner candidates (Promo Calendar) ----------\nconst commTasks = commRaw.filter(t => {\n  if (!t || !t.gid) return false;\n  if (artGids.has(String(t.gid))) return false;\n  if (inExcludedProject(t)) return false;\n  if (isBg(t)) return false;\n  if (isCancelled(t)) return false;\n  return hasTypeOfIssue(t, COMMUNITY_OPT);\n});\n\nconst infoTasks = commRaw.filter(t => {\n  if (!t || !t.gid) return false;\n  if (artGids.has(String(t.gid))) return false;\n  if (inExcludedProject(t)) return false;\n  if (isBg(t)) return false;\n  if (isCancelled(t)) return false;\n  return hasTypeOfIssue(t, INFO_BANNER_OPT);\n});\n\n// ---------- GR/WS reuse banners (parsed from parent task descriptions) ----------\n// Find a \"Reuse banners:\" block in any top-level Promo Calendar task dated this\n// day, pull the WS: / GR: links, and surface them in GR+WS with a REUSE remark.\nconst extractReuseBanners = (htmlNotes) => {\n  const out = [];\n  if (!htmlNotes) return out;\n  const idx = htmlNotes.search(/Reuse\\s+banners\\s*:/i);\n  if (idx === -1) return out;\n  let block = htmlNotes.slice(idx);\n  const stop = block.search(/<hr\\b/i);   // don't bleed into a later section\n  if (stop !== -1) block = block.slice(0, stop);\n  const re = /\\b(WS|GR)\\s*:[^<]*?<a\\s+([^>]*)>([\\s\\S]*?)<\\/a>/gi;\n  let m;\n  while ((m = re.exec(block)) !== null) {\n    const label = m[1].toUpperCase();\n    const attrs = m[2] || \"\";\n    const inner = m[3] || \"\";\n    let gid = null;\n    const gidM = attrs.match(/data-asana-gid=\"(\\d+)\"/);\n    if (gidM) {\n      gid = gidM[1];\n    } else {\n      const hrefM = attrs.match(/href=\"[^\"]*?task\\/(\\d+)/);\n      if (hrefM) gid = hrefM[1];\n    }\n    const text = decodeHtml(inner.replace(/<[^>]+>/g, \"\"))\n      .replace(/^[\\s\\u2713\\u2714\\u2705]+/, \"\")\n      .trim();\n    if (gid) out.push({ label, gid, text });\n  }\n  return out;\n};\n\nconst reuseMap = new Map();\nfor (const t of commRaw) {\n  if (!t || t.parent) continue;   // reuse banners live on top-level promo tasks\n  for (const r of extractReuseBanners(t.html_notes)) {\n    reuseMap.set(`${r.label}|${r.gid}`, r);\n  }\n}\nconst grWsReuse = Array.from(reuseMap.values());\n\n// ---------- Buckets ----------\nconst bucket = (t) => {\n  const nm = t.name || \"\";\n  if (GR_WS_RE.test(nm))  return \"grws\";\n  if (PO_DPO_RE.test(nm)) return \"podpo\";\n  return \"general\";\n};\n\nconst generalArt = [], poDpoArt = [], grWsArt = [];\nfor (const t of artTasks) {\n  const b = bucket(t);\n  if (b === \"grws\")  grWsArt.push(t);\n  else if (b === \"podpo\") poDpoArt.push(t);\n  else generalArt.push(t);\n}\nconst generalInfo = [], poDpoInfo = [], grWsInfo = [];\nfor (const t of infoTasks) {\n  const b = bucket(t);\n  if (b === \"grws\")  grWsInfo.push(t);\n  else if (b === \"podpo\") poDpoInfo.push(t);\n  else generalInfo.push(t);\n}\n\n// ---------- Renderers ----------\nconst renderArt = (t) => {\n  const doneMark = t.completed ? \" \\u2713\" : \"\";\n  return `<li><a href=\"https://app.asana.com/0/0/${t.gid}\">${escapeHtml(t.name)}</a>${doneMark}</li>`;\n};\nconst renderInfo = (t) => {\n  const doneMark = t.completed ? \" \\u2713\" : \"\";\n  return `<li><a href=\"https://app.asana.com/0/0/${t.gid}\">${escapeHtml(t.name)}</a> (Info Banner)${doneMark}</li>`;\n};\nconst renderComm = (t) => {\n  const doneMark = t.completed ? \" \\u2713\" : \"\";\n  return `<li><a href=\"https://app.asana.com/0/0/${t.gid}\">${escapeHtml(t.name)}</a> (Community)${doneMark}</li>`;\n};\nconst renderReuse = (r) => {\n  const txt = r.text ? escapeHtml(r.text) : `${r.label} reuse banner`;\n  return `<li><strong>${r.label}:</strong> <a href=\"https://app.asana.com/0/0/${r.gid}\">${txt}</a> &mdash; <strong>REUSE</strong></li>`;\n};\n\n// ---------- Assemble ----------\nlet html = \"<body>\";\nhtml += `<strong>Linked Art &amp; Community Tasks (${escapeHtml(placement.due_on)}):</strong>`;\n\nconst hasReuse = grWsReuse.length > 0;\nconst hasGrWs  = grWsArt.length > 0 || grWsInfo.length > 0 || hasReuse;\nconst nothing  = artTasks.length === 0 && commTasks.length === 0 &&\n                 infoTasks.length === 0 && !hasReuse;\n\nif (nothing) {\n  html += \"<ul><li><em>No Art, Community or Info Banner tasks found for this date.</em></li></ul>\";\n} else {\n  // 1. General\n  if (generalArt.length > 0 || generalInfo.length > 0) {\n    html += \"<ul>\";\n    for (const t of generalArt)  html += renderArt(t);\n    for (const t of generalInfo) html += renderInfo(t);\n    html += \"</ul>\";\n  }\n  // 2. Community (now gets its own separator)\n  if (commTasks.length > 0) {\n    html += \"<strong>*********************Community*********************</strong>\";\n    html += \"<ul>\";\n    for (const t of commTasks) html += renderComm(t);\n    html += \"</ul>\";\n  }\n  // 3. PO/DPO\n  if (poDpoArt.length > 0 || poDpoInfo.length > 0) {\n    html += \"<strong>*********************PO/DPO*********************</strong>\";\n    html += \"<ul>\";\n    for (const t of poDpoArt)  html += renderArt(t);\n    for (const t of poDpoInfo) html += renderInfo(t);\n    html += \"</ul>\";\n  }\n  // 4. GR+WS  (always shown when the date has activity)\n  html += \"<strong>*********************GR+WS*********************</strong>\";\n  if (hasGrWs) {\n    html += \"<ul>\";\n    for (const t of grWsArt)   html += renderArt(t);\n    for (const t of grWsInfo)  html += renderInfo(t);\n    for (const r of grWsReuse) html += renderReuse(r);\n    html += \"</ul>\";\n  } else {\n    html += \"<ul><li><em>No reuses found - use generic banners</em></li></ul>\";\n  }\n}\nhtml += \"</body>\";\n\nreturn {\n  json: {\n    placementGid:  placement.gid,\n    placementName: placement.name,\n    placementDate: placement.due_on,\n    artCount:      artTasks.length,\n    infoCount:     infoTasks.length,\n    commCount:     commTasks.length,\n    reuseCount:    grWsReuse.length,\n    generalCount:  generalArt.length + generalInfo.length,\n    poDpoCount:    poDpoArt.length + poDpoInfo.length,\n    grWsCount:     grWsArt.length + grWsInfo.length + grWsReuse.length,\n    html_notes:    html,\n  }\n};\n"}
+</script>
+
+<script>
+const CLIENT_ID     = "1214940964091051";
+const CLIENT_SECRET = "20d6386dcb65b65a8043630f2121f600";
+const REDIRECT_URI  = window.location.href.split("?")[0].split("#")[0];
+const ASANA_AUTH    = "https://app.asana.com/-/oauth_authorize";
+const ASANA_TOKEN   = "https://app.asana.com/-/oauth_token";
+const ASANA_API     = "https://app.asana.com/api/1.0";
+
+let accessToken = localStorage.getItem("asana_token") || null;
+
+const SPEC = JSON.parse(document.getElementById("pipeline-spec").textContent);
+const WORKSPACE_GID = SPEC.workspaceGid;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+function loginWithAsana() {
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem("oauth_state", state);
+  window.location.href = `${ASANA_AUTH}?${new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code", state })}`;
+}
+async function exchangeCode(code) {
+  const res = await fetch(ASANA_TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "authorization_code", client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, code }) });
+  const data = await res.json();
+  if (data.access_token) { accessToken = data.access_token; localStorage.setItem("asana_token", accessToken); return true; }
+  return false;
+}
+function logout() {
+  localStorage.removeItem("asana_token");
+  accessToken = null;
+  document.getElementById("appArea").style.display = "none";
+  document.getElementById("loginArea").style.display = "block";
+}
+
+// ── ASANA API HELPERS ────────────────────────────────────────────────────
+async function asanaGet(path) {
+  const res = await fetch(`${ASANA_API}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPut(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── N8N CODE-NODE SHIM ───────────────────────────────────────────────────
+// Runs the workflow's original Code-node bodies verbatim, so business logic
+// (HTML notes, bucketing rules, reuse-banner parsing) stays byte-identical to n8n.
+function runItemCode(code, jsonObj) {
+  return new Function("$json", code)(jsonObj);
+}
+function runPerItemCode(code, namedInputs) {
+  const $ = (name) => ({ item: { json: namedInputs[name] } });
+  return new Function("$", code)($);
+}
+
+// ── LOG PANEL ────────────────────────────────────────────────────────────
+const logEl = document.getElementById("log");
+function log(text, cls) {
+  logEl.style.display = "block";
+  const div = document.createElement("div");
+  div.className = "line" + (cls ? " " + cls : "");
+  div.textContent = text;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ── MAIN RUN ─────────────────────────────────────────────────────────────
+async function runAll() {
+  const rangeStart = document.getElementById("rangeStart").value;
+  const rangeEnd = document.getElementById("rangeEnd").value;
+  if (!rangeStart || !rangeEnd) {
+    alert("Enter both a range start and range end date.");
+    return;
+  }
+
+  if (!confirm(`This will overwrite the notes on any Placement tasks due between ${rangeStart} and ${rangeEnd}.\n\nContinue?`)) return;
+
+  const btn = document.getElementById("runBtn");
+  btn.disabled = true;
+  logEl.innerHTML = "";
+  logEl.style.display = "block";
+  log(`Starting run for ${rangeStart} – ${rangeEnd}…`, "muted");
+
+  try {
+    const prep = runItemCode(SPEC.prepSearchDatesCode, { rangeStart, rangeEnd });
+    const { dueAfter, dueBefore } = prep[0].json;
+
+    const q = new URLSearchParams({
+      "tags.any": SPEC.placementTagId,
+      "due_on.after": dueAfter,
+      "due_on.before": dueBefore,
+      "opt_fields": SPEC.placementOptFields,
+      "limit": "100",
+    });
+    const searchRes = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
+    await sleep(120);
+
+    const placementItems = runItemCode(SPEC.splitPlacementsCode, searchRes);
+    const placements = placementItems.map(i => i.json);
+
+    if (placements.length === 0) {
+      log("No Placement tasks with a due date found in that range.", "warn");
+      log("All done.", "ok");
+      btn.disabled = false;
+      return;
+    }
+    log(`Found ${placements.length} placement(s) to update.`, "muted");
+
+    for (const placement of placements) {
+      try {
+        const artQ = new URLSearchParams({
+          "projects.any": SPEC.artProjectId,
+          "due_on": placement.due_on,
+          "opt_fields": SPEC.artOptFields,
+          "limit": "100",
+        });
+        const artRes = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${artQ}`);
+        await sleep(120);
+
+        const commQ = new URLSearchParams({
+          "projects.any": SPEC.communityProjectId,
+          "due_on": placement.due_on,
+          "opt_fields": SPEC.communityOptFields,
+          "limit": "100",
+        });
+        const commRes = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${commQ}`);
+        await sleep(120);
+
+        const built = runPerItemCode(SPEC.buildNotesCode, {
+          "Split Placements": placement,
+          "Get Art Tasks": artRes,
+          "Get Community Candidates": commRes,
+        });
+        const j = built.json;
+
+        await asanaPut(`/tasks/${j.placementGid}`, { html_notes: j.html_notes });
+        await sleep(120);
+
+        log(`  ✓ ${j.placementDate} — "${j.placementName}" (art:${j.artCount} info:${j.infoCount} comm:${j.commCount} reuse:${j.reuseCount})`, "ok");
+      } catch (e) {
+        log(`  ✗ placement "${placement.name}" (${placement.due_on}) — ${e.message}`, "err");
+      }
+    }
+  } catch (e) {
+    log(`✗ ${e.message}`, "err");
+  }
+
+  log("All done.", "ok");
+  btn.disabled = false;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code"), state = params.get("state"), error = params.get("error");
+  if (code || error) window.history.replaceState({}, document.title, window.location.pathname);
+  if (error) {
+    document.getElementById("oauthError").style.display = "block";
+    document.getElementById("oauthError").textContent = `Asana login error: ${error}`;
+    return;
+  }
+  if (code) {
+    const saved = sessionStorage.getItem("oauth_state");
+    if (state !== saved) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "OAuth state mismatch.";
+      return;
+    }
+    sessionStorage.removeItem("oauth_state");
+    const ok = await exchangeCode(code);
+    if (!ok) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "Failed to exchange login code.";
+      return;
+    }
+  }
+  if (accessToken) {
+    document.getElementById("loginArea").style.display = "none";
+    document.getElementById("appArea").style.display = "block";
+    try {
+      const me = await asanaGet("/users/me?opt_fields=name");
+      document.getElementById("userLabel").textContent = `Signed in as ${me.data.name}`;
+    } catch (e) { /* ignore */ }
+  } else {
+    document.getElementById("loginArea").style.display = "block";
+    document.getElementById("appArea").style.display = "none";
+  }
+}
+init();
+</script>
+</body>
+</html>
