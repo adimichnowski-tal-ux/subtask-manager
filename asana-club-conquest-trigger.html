@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asana Club &amp; Conquest Trigger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0c0e; --surface: #13151a; --surface2: #1c1f27;
+    --border: rgba(255,255,255,0.07); --border-strong: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7d86;
+    --accent: #9b8cff; --accent-hover: #b0a4ff;
+    --success: #6ae8a0; --success-bg: rgba(106,232,160,0.08);
+    --danger: #e87a6a; --danger-bg: rgba(232,122,106,0.08);
+    --warn: #e8b46a; --warn-bg: rgba(232,180,106,0.08);
+  }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px 80px; position: relative; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 700px; height: 400px; background: radial-gradient(ellipse, rgba(155,140,255,0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  .wrapper { width: 100%; max-width: 680px; position: relative; z-index: 1; }
+  header { margin-bottom: 40px; text-align: center; }
+  .logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--surface2); border: 1px solid var(--border-strong); border-radius: 12px; margin-bottom: 20px; font-size: 20px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 12px; margin: 0 0 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-strong);
+    background: var(--surface2); color: var(--text); font-size: 14px; margin-bottom: 14px; font-family: 'DM Mono', monospace;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .pipelines { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 8px; }
+  .pipe-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+  .pipe-item input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+  .pipe-item label { margin: 0; color: var(--text); font-size: 14px; cursor: pointer; }
+  .pipe-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+  .pipe-actions button { background: none; border: 1px solid var(--border-strong); color: var(--muted); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .pipe-actions button:hover { color: var(--text); border-color: var(--accent); }
+  .hint { font-size: 12px; color: var(--muted); margin: -8px 0 14px; line-height: 1.4; }
+  button.primary {
+    width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent);
+    color: #0b0c0e; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .userbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: var(--muted); }
+  .userbar a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .userbar a:hover { text-decoration: underline; }
+  #loginArea { text-align: center; }
+  #loginArea .card { text-align: left; }
+  #loginArea p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  #oauthError { display: none; background: var(--danger-bg); color: var(--danger); border-radius: 8px; padding: 12px 14px; font-size: 13px; margin-bottom: 16px; }
+  #appArea { display: none; }
+  #log {
+    margin-top: 8px; max-height: 320px; overflow-y: auto; background: #08090b; border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.6;
+  }
+  #log .line { white-space: pre-wrap; word-break: break-word; }
+  #log .ok { color: var(--success); }
+  #log .err { color: var(--danger); }
+  #log .warn { color: var(--warn); }
+  #log .muted { color: var(--muted); }
+  footer { margin-top: 32px; text-align: center; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <div class="logo-mark">⚡</div>
+    <h1>Asana Club &amp; Conquest Trigger</h1>
+    <div class="sub">Runs the "Asana Offers (Club Events &amp; Conquests)" automation directly against the Asana API.</div>
+  </header>
+
+  <div id="oauthError"></div>
+
+  <div id="loginArea">
+    <div class="card">
+      <h2>Connect your Asana account</h2>
+      <p>Sign in with Asana so tasks are created under your own account.</p>
+      <button class="primary" onclick="loginWithAsana()">Login with Asana</button>
+    </div>
+  </div>
+
+  <div id="appArea">
+    <div class="userbar">
+      <span id="userLabel"></span>
+      <a onclick="logout()">Log out</a>
+    </div>
+
+    <div class="card">
+      <h2>Dates</h2>
+      <div class="row">
+        <div>
+          <label for="rangeStart">Range start</label>
+          <input type="date" id="rangeStart">
+        </div>
+        <div>
+          <label for="rangeEnd">Range end</label>
+          <input type="date" id="rangeEnd">
+        </div>
+      </div>
+      <div class="hint">Each pipeline searches for planning tasks due within this range (inclusive). This workflow does not support single/specific dates — only a range.</div>
+    </div>
+
+    <div class="card">
+      <h2>Pipelines to run</h2>
+      <div class="pipe-actions">
+        <button type="button" onclick="setAllPipelines(true)">Select all</button>
+        <button type="button" onclick="setAllPipelines(false)">Select none</button>
+      </div>
+      <div class="pipelines" id="pipelines"></div>
+      <div class="hint">Each pipeline looks for existing planning task(s) tagged for that type, due within the chosen range, then builds a parent task + subtasks from each match. A pipeline can create more than one parent task if multiple planning tasks fall in the range.</div>
+    </div>
+
+    <button class="primary" id="runBtn" onclick="runAll()">Run</button>
+    <div id="log" style="display:none;"></div>
+  </div>
+
+  <footer>Powered by Asana API</footer>
+</div>
+
+<script id="pipeline-spec" type="application/json">
+{"workspaceGid": "54393662698285", "pipelines": {"Club_Chips": {"label": "Club Chips", "tagId": "1214828287838086", "dateField": "due_on", "parentProjectId": "1202103624709695", "customFields": {"1202103624709739": "1202103624709743"}, "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchItems=$items(\"Search Club Chips Tasks\");\nconst allTasks=searchItems.flatMap(it=>(it.json&&it.json.data)||[]);\nconst matches=allTasks.filter(t=>t.start_on||t.due_on);\nfunction isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nreturn matches.map(matchingTask=>{\n  const rawStart=matchingTask.start_on||matchingTask.due_on;\n  const rawEnd=matchingTask.due_on||rawStart;\n  const startPrefix=isoToDDMM(rawStart);\n  const endPrefix=isoToDDMM(rawEnd);\n  const fullPrefix=startPrefix===endPrefix?startPrefix:`${startPrefix} - ${endPrefix}`;\n  const baseName=\"Hard club event with extra chips\";\n  const parentName=`${fullPrefix} - ${baseName}`;\n  const subtaskPrefix=parentName;\n  const parentHtml=\"<body><strong>General Info:</strong>\\n<ul><li>Hard club event with extra Chips</li></ul><hr /><strong>Economy:</strong>\\n<ul><li>Hard club event with extra chips</li><li>Please update the slots:</li></ul>\\n<hr /><strong>Art/Copy</strong>:\\n<strong>Re-Run \\ud83c\\udfa8</strong>\\n<strong>Leading theme</strong>:\\n<ul><li>Please follow <strong>Economy</strong> section for the slots</li></ul><strong>Number of versions</strong>:\\n<strong>Reward special notes</strong>:\\n<ul><li>Chips</li></ul><strong>TnC</strong>:\\n<ul><li>Time-limited promo</li></ul><hr /><strong>BA</strong>:\\n<hr /><strong>OPS</strong>:</body>\";\n  return{json:{parentName,parentHtml,startOn:rawStart===rawEnd?null:rawStart,endOn:rawEnd,_passThrough:{fullPrefix,baseName,subtaskPrefix,parentStartOn:rawStart,parentDueOn:rawEnd}}};\n});", "buildCode": "function economyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-7);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split(\"T\")[0];}\nfunction copyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-7);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split(\"T\")[0];}\nconst parentInputs=$items(\"Process Club Chips Tags\");\nconst artNotesText=\"\\ud83c\\udfa8Design Tips:\\n    Let's please use similar elements to this day's PO https://app.asana.com/1/54393662698285/project/1202805118467140/task/1214102406512611?focus=true\\n\\n----------------------------------------\\n\\n\\n<MAIN>\\nSpin <acc to config> & <acc to config> to\\nWIN EXTRA CHIPS\\n\\nCTA: LET'S GO!\";\nreturn $input.all().flatMap((item,index)=>{\n  const parentGid=$items(\"Create Club Chips Parent Task\")[index].json.gid;\n  const passThrough=parentInputs[index].json._passThrough||{};\n  const subtaskPrefix=passThrough.subtaskPrefix||\"\";\n  const parentStartOn=passThrough.parentStartOn;\n  const parentDueOn=passThrough.parentDueOn;\n  if(!parentGid)return[];\n  const econDueOn=economyDueDateFromParent(parentStartOn);\n  const copyDueOn=copyDueDateFromParent(parentStartOn);\n  return[\n    {json:{parentGid,name:`${subtaskPrefix} - OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - ART`,assigneeGid:null,dueOn:parentStartOn,notes:artNotesText,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - COPY`,assigneeGid:\"1203098753090568\",dueOn:copyDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - CONFIG`,assigneeGid:\"1210003732019617\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}}\n  ];\n});"}, "Club_Charms": {"label": "Club Charms", "tagId": "1214828383627717", "dateField": "due_on", "parentProjectId": "1202103624709695", "customFields": {"1202103624709739": "1202103624709743"}, "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchItems=$items(\"Search Club Charms Tasks\");\nconst allTasks=searchItems.flatMap(it=>(it.json&&it.json.data)||[]);\nconst matches=allTasks.filter(t=>t.start_on||t.due_on);\nfunction isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nreturn matches.map(matchingTask=>{\n  const rawStart=matchingTask.start_on||matchingTask.due_on;\n  const rawEnd=matchingTask.due_on||rawStart;\n  const startPrefix=isoToDDMM(rawStart);\n  const endPrefix=isoToDDMM(rawEnd);\n  const fullPrefix=startPrefix===endPrefix?startPrefix:`${startPrefix} - ${endPrefix}`;\n  const baseName=\"Hard club event with extra charms\";\n  const parentName=`${fullPrefix} - ${baseName}`;\n  const subtaskPrefix=parentName;\n  const parentHtml=\"<body><strong>General Info:</strong>\\n<ul><li>Hard club event with extra charms</li></ul><hr /><strong>Economy:</strong>\\n<ul><li>Hard club event with extra charms</li><li>Please update the slots:</li></ul>\\n<hr /><strong>Art/Copy</strong>:\\n<strong>Re-Run \\ud83c\\udfa8</strong>\\n<strong>Leading theme</strong>:\\n<ul><li>Please follow <strong>Economy</strong> section for the slots</li></ul><strong>Number of versions</strong>:\\n<strong>Reward special notes</strong>:\\n<ul><li>charms</li></ul><strong>TnC</strong>:\\n<ul><li>Time-limited promo</li></ul><hr /><strong>BA</strong>:\\n<hr /><strong>OPS</strong>:</body>\";\n  return{json:{parentName,parentHtml,startOn:rawStart===rawEnd?null:rawStart,endOn:rawEnd,_passThrough:{fullPrefix,baseName,subtaskPrefix,parentStartOn:rawStart,parentDueOn:rawEnd}}};\n});", "buildCode": "function economyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-7);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split(\"T\")[0];}\nfunction copyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-7);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split(\"T\")[0];}\nconst parentInputs=$items(\"Process Club Charms Tags\");\nconst artNotesText=\"\\ud83c\\udfa8Design Tips:\\n    Let's please use similar elements to this day's PO https://app.asana.com/1/54393662698285/project/1202805118467140/task/1214102406512611?focus=true\\n\\n----------------------------------------\\n\\n\\n<MAIN>\\nSpin <acc to config> & <acc to config> to\\nWIN EXTRA CHARMS\\n\\nCTA: LET'S GO!\";\nreturn $input.all().flatMap((item,index)=>{\n  const parentGid=$items(\"Create Club Charms Parent Task\")[index].json.gid;\n  const passThrough=parentInputs[index].json._passThrough||{};\n  const subtaskPrefix=passThrough.subtaskPrefix||\"\";\n  const parentStartOn=passThrough.parentStartOn;\n  const parentDueOn=passThrough.parentDueOn;\n  if(!parentGid)return[];\n  const econDueOn=economyDueDateFromParent(parentStartOn);\n  const copyDueOn=copyDueDateFromParent(parentStartOn);\n  return[\n    {json:{parentGid,name:`${subtaskPrefix} - OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - ART`,assigneeGid:null,dueOn:parentStartOn,notes:artNotesText,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - COPY`,assigneeGid:\"1203098753090568\",dueOn:copyDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - CONFIG`,assigneeGid:\"1210003732019617\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}}\n  ];\n});"}, "Club_ChipsPlusCharms": {"label": "Club Chips+Charms", "tagId": "1214828657142340", "dateField": "due_on", "parentProjectId": "1202103624709695", "customFields": {"1202103624709739": "1202103624709743"}, "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchItems=$items(\"Search Club Chips+Charms Tasks\");\nconst allTasks=searchItems.flatMap(it=>(it.json&&it.json.data)||[]);\nconst matches=allTasks.filter(t=>t.start_on||t.due_on);\nfunction isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nreturn matches.map(matchingTask=>{\n  const rawStart=matchingTask.start_on||matchingTask.due_on;\n  const rawEnd=matchingTask.due_on||rawStart;\n  const startPrefix=isoToDDMM(rawStart);\n  const endPrefix=isoToDDMM(rawEnd);\n  const fullPrefix=startPrefix===endPrefix?startPrefix:`${startPrefix} - ${endPrefix}`;\n  const baseName=\"Hard club event with extra charms and chips\";\n  const parentName=`${fullPrefix} - ${baseName}`;\n  const subtaskPrefix=parentName;\n  const parentHtml=\"<body><strong>General Info:</strong>\\n<ul><li>Hard club event with extra charms and chips</li></ul><hr /><strong>Economy:</strong>\\n<ul><li>Hard club event with extra charms and chips</li><li>Please update the slots:</li></ul>\\n<hr /><strong>Art/Copy</strong>:\\n<strong>Re-Run \\ud83c\\udfa8</strong>\\n<strong>Leading theme</strong>:\\n<ul><li>Please follow <strong>Economy</strong> section for the slots</li></ul><strong>Number of versions</strong>:\\n<strong>Reward special notes</strong>:\\n<ul><li>charms and chips</li></ul><strong>TnC</strong>:\\n<ul><li>Time-limited promo</li></ul><hr /><strong>BA</strong>:\\n<hr /><strong>OPS</strong>:</body>\";\n  return{json:{parentName,parentHtml,startOn:rawStart===rawEnd?null:rawStart,endOn:rawEnd,_passThrough:{fullPrefix,baseName,subtaskPrefix,parentStartOn:rawStart,parentDueOn:rawEnd}}};\n});", "buildCode": "function economyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-7);const wd=dt.getUTCDay();if(wd===5)dt.setUTCDate(dt.getUTCDate()-1);if(wd===6)dt.setUTCDate(dt.getUTCDate()-2);return dt.toISOString().split(\"T\")[0];}\nfunction copyDueDateFromParent(parentDueIso){if(!parentDueIso)return null;const[y,m,d]=parentDueIso.split(\"-\").map(x=>parseInt(x,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-7);const wd=dt.getUTCDay();if(wd===0)dt.setUTCDate(dt.getUTCDate()-2);if(wd===6)dt.setUTCDate(dt.getUTCDate()-1);return dt.toISOString().split(\"T\")[0];}\nconst parentInputs=$items(\"Process Club Chips+Charms Tags\");\nconst artNotesText=\"\\ud83c\\udfa8Design Tips:\\n    Let's please use similar elements to this day's PO https://app.asana.com/1/54393662698285/project/1202805118467140/task/1214102406512611?focus=true\\n\\n----------------------------------------\\n\\n\\n<MAIN>\\nSpin <acc to config> & <acc to config> to\\nWIN EXTRA CHARMS AND CHIPS\\n\\nCTA: LET'S GO!\";\nreturn $input.all().flatMap((item,index)=>{\n  const parentGid=$items(\"Create Club Chips+Charms Parent Task\")[index].json.gid;\n  const passThrough=parentInputs[index].json._passThrough||{};\n  const subtaskPrefix=passThrough.subtaskPrefix||\"\";\n  const parentStartOn=passThrough.parentStartOn;\n  const parentDueOn=passThrough.parentDueOn;\n  if(!parentGid)return[];\n  const econDueOn=economyDueDateFromParent(parentStartOn);\n  const copyDueOn=copyDueDateFromParent(parentStartOn);\n  return[\n    {json:{parentGid,name:`${subtaskPrefix} - OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - ART`,assigneeGid:null,dueOn:parentStartOn,notes:artNotesText,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - COPY`,assigneeGid:\"1203098753090568\",dueOn:copyDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - CONFIG`,assigneeGid:\"1210003732019617\",dueOn:econDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}}\n  ];\n});"}, "Conquest": {"label": "Conquest", "tagId": "1214828286445321", "dateField": "start_on", "parentProjectId": "1202103624709695", "customFields": {"1202103624709739": "1202103624709751", "1202961503380245": "FEATURE + CONQUEST"}, "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchItems=$items(\"Search Conquest Tasks\");\nconst allTasks=searchItems.flatMap(it=>(it.json&&it.json.data)||[]);\nconst matches=allTasks.filter(t=>t.start_on);\nfunction isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction isSundayUTC(iso){const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));return new Date(Date.UTC(y,m-1,d)).getUTCDay()===0;}\nfunction diffDaysInclusive(startIso,endIso){const[sy,sm,sd]=startIso.split(\"-\").map(n=>parseInt(n,10));const[ey,em,ed]=endIso.split(\"-\").map(n=>parseInt(n,10));const start=Date.UTC(sy,sm-1,sd);const end=Date.UTC(ey,em-1,ed);return Math.round((end-start)/86400000)+1;}\nfunction addDaysUTC(iso,days){const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,\"0\")}-${String(dt.getUTCDate()).padStart(2,\"0\")}`;}\nreturn matches.map(matchingTask=>{\n  const rawStart=matchingTask.start_on;\n  const rawEnd=matchingTask.due_on||rawStart;\n  const endPlusOne=addDaysUTC(rawEnd,1);\n  const startPrefix=isoToDDMM(rawStart);\n  const endPrefix=isoToDDMM(rawEnd);\n  const endPlusOnePrefix=isoToDDMM(endPlusOne);\n  const fullPrefix=startPrefix===endPrefix?startPrefix:`${startPrefix} - ${endPrefix}`;\n  const days=diffDaysInclusive(rawStart,rawEnd);\n  const dayLabel=days===1?\"Day\":\"Days\";\n  const endHour=isSundayUTC(rawEnd)?\"06:00\":\"07:00\";\n  const baseName=`${days} ${dayLabel} Conquest`;\n  const parentName=`${fullPrefix} - ${baseName} [${startPrefix} 07:10 - ${endPlusOnePrefix} ${endHour}]`;\n  const subtaskPrefix=parentName;\n  const parentHtml=(\"<body><strong>General Info:</strong>\\n<ul><li>For <code><strong>X</strong></code> Day(s)</li><li>Audience: <code>Gold 3+ Clubbers</code></li><li>Theme \\u2192 <code>Generic</code></li><li>Other specifics: <code>Specify if needed</code> </li></ul><hr /><strong>Economy:</strong>\\n<ul><li>Please update - all fields should be filled: </li><li>The final Prize includes: <code>Charms + Chips</code></li><li>Slots as per config: </li></ul>\\n<hr /><strong>Art/Copy</strong>:\\n<ul><li><strong>Art/Copy:</strong></li><li><code>2</code> banners: Leaders/Clubbers</li></ul>\\n<strong>Please specify the banners and the theme:</strong> \\nTheme: <code>Generic</code>\\n<ul><li>Banners:</li><ul><li>All Players</li><li>Leaders</li></ul></ul><hr /><strong>OPS</strong>:\\n<ul><li>\\n</li></ul></body>\").replace(\"<strong>X</strong></code> Day(s)\",`<strong>${days}</strong></code> ${dayLabel}`);\n  return{json:{parentName,parentHtml,startOn:rawStart===rawEnd?null:rawStart,endOn:rawEnd,_passThrough:{fullPrefix,baseName,subtaskPrefix,parentStartOn:rawStart,parentDueOn:rawEnd,endHour}}};\n});", "buildCode": "function addDaysUTC(iso,days){if(!iso)return null;const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,\"0\")}-${String(dt.getUTCDate()).padStart(2,\"0\")}`;}\nfunction conquestConfigDue(parentStartIso){\n  if(!parentStartIso)return null;\n  const[y,m,d]=parentStartIso.split(\"-\").map(x=>parseInt(x,10));\n  const dt=new Date(Date.UTC(y,m-1,d));\n  dt.setUTCDate(dt.getUTCDate()-3);\n  const wd=dt.getUTCDay();\n  if(wd===6)dt.setUTCDate(dt.getUTCDate()+4);\n  else if(wd===0)dt.setUTCDate(dt.getUTCDate()+3);\n  else if(wd===1)dt.setUTCDate(dt.getUTCDate()+2);\n  else if(wd===2)dt.setUTCDate(dt.getUTCDate()+1);\n  return dt.toISOString().split(\"T\")[0];\n}\nconst parentInputs=$items(\"Process Conquest Tags\");\nconst artAllNotes=\"\\ud83c\\udfa8 Design Tips:\\n\\n\\n----------------------------------------\\n\\n\\n<MAIN>\\nBE A SUPER SPINNER! \\n\\n<SUB>\\nPlay to help your Club\\nWIN <Prize>\\n\\nBadge: <Charm Pack> included\\n\\n\\nCTA: \\n\\nT&C: Event ends Jan. 4th 11PM PST\";\nconst artLeadersNotes=\"\\ud83c\\udfa8 Design Tips:\\n\\n<MAIN>\\nBE A SUPER CLUB LEADER! \\n\\n<SUB>\\nPlay to help your Club\\n& WIN HEROIC PRIZES\\n\\nBadge: <Charm Pack> included\\n\\n\\nCTA: \\n\\nT&C: Event ends Jan. 4th 11PM PST\";\nconst reminderName=\"***Reminder 24 Hours rewarding for Conquest - Set date to one day after the CQ \";\nreturn $input.all().flatMap((item,index)=>{\n  const parentGid=$items(\"Create Conquest Parent Task\")[index].json.gid;\n  const passThrough=parentInputs[index].json._passThrough||{};\n  const subtaskPrefix=passThrough.subtaskPrefix||\"\";\n  const parentStartOn=passThrough.parentStartOn;\n  const parentDueOn=passThrough.parentDueOn;\n  if(!parentGid)return[];\n  const configDueOn=conquestConfigDue(parentStartOn);\n  const reminderDueOn=addDaysUTC(parentDueOn,1);\n  return[\n    {json:{parentGid,name:reminderName,assigneeGid:null,dueOn:reminderDueOn,notes:\"\",_passThrough:{projectGids:[\"1202103624709695\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Club Leaders - Art `,assigneeGid:null,dueOn:parentStartOn,notes:artLeadersNotes,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - All Players - Art `,assigneeGid:null,dueOn:parentStartOn,notes:artAllNotes,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Copy `,assigneeGid:\"1203098753090568\",dueOn:configDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Config`,assigneeGid:\"1202726613255877\",dueOn:configDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}}\n  ];\n});"}, "Turbo_Conquest": {"label": "Turbo Conquest", "tagId": "1214828350633040", "dateField": "due_on", "parentProjectId": "1202103624709695", "customFields": {"1202103624709739": "1202103624709751", "1202961503380245": "FEATURE + CONQUEST"}, "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchItems=$items(\"Search Turbo Conquest Tasks\");\nconst allTasks=searchItems.flatMap(it=>(it.json&&it.json.data)||[]);\nconst matches=allTasks.filter(t=>t.due_on||t.start_on);\nfunction isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction isSundayUTC(iso){const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));return new Date(Date.UTC(y,m-1,d)).getUTCDay()===0;}\nfunction addDaysUTC(iso,days){const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,\"0\")}-${String(dt.getUTCDate()).padStart(2,\"0\")}`;}\nreturn matches.map(matchingTask=>{\n  const theDate=matchingTask.start_on||matchingTask.due_on;\n  const endPlusOne=addDaysUTC(theDate,1);\n  const datePrefix=isoToDDMM(theDate);\n  const endPlusOnePrefix=isoToDDMM(endPlusOne);\n  const endHour=isSundayUTC(theDate)?\"06:00\":\"07:00\";\n  const baseName=`Turbo Conquest`;\n  const parentName=`${datePrefix} - ${baseName} [Ends ${endPlusOnePrefix} ${endHour}]`;\n  const subtaskPrefix=parentName;\n  const parentHtml=\"<body><strong>General Info:</strong>\\n<ul><li>For <code><strong>1</strong></code> Day</li><li>Audience: <code>Gold 3+ Clubbers</code></li><li>Theme \\u2192 <code>Generic</code></li><li>Other specifics: <code>Specify if needed</code> </li></ul><hr /><strong>Economy:</strong>\\n<ul><li>Please update - all fields should be filled: </li><li>The final Prize includes: <code>Charms + Chips</code></li><li>Slots as per config: </li></ul>\\n<hr /><strong>Art/Copy</strong>:\\n<ul><li><strong>Art/Copy:</strong></li><li><code>2</code> banners: Leaders/Clubbers</li></ul>\\n<strong>Please specify the banners and the theme:</strong> \\nTheme: <code>Generic</code>\\n<ul><li>Banners:</li><ul><li>All Players</li><li>Leaders</li></ul></ul><hr /><strong>OPS</strong>:\\n<ul><li>\\n</li></ul></body>\";\n  return{json:{parentName,parentHtml,startOn:null,endOn:theDate,_passThrough:{fullPrefix:datePrefix,baseName,subtaskPrefix,parentStartOn:theDate,parentDueOn:theDate,endHour}}};\n});", "buildCode": "function addDaysUTC(iso,days){if(!iso)return null;const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,\"0\")}-${String(dt.getUTCDate()).padStart(2,\"0\")}`;}\nfunction conquestConfigDue(parentStartIso){\n  if(!parentStartIso)return null;\n  const[y,m,d]=parentStartIso.split(\"-\").map(x=>parseInt(x,10));\n  const dt=new Date(Date.UTC(y,m-1,d));\n  dt.setUTCDate(dt.getUTCDate()-3);\n  const wd=dt.getUTCDay();\n  if(wd===6)dt.setUTCDate(dt.getUTCDate()+4);\n  else if(wd===0)dt.setUTCDate(dt.getUTCDate()+3);\n  else if(wd===1)dt.setUTCDate(dt.getUTCDate()+2);\n  else if(wd===2)dt.setUTCDate(dt.getUTCDate()+1);\n  return dt.toISOString().split(\"T\")[0];\n}\nconst parentInputs=$items(\"Process Turbo Conquest Tags\");\nconst artAllNotes=\"\\ud83c\\udfa8 Design Tips:\\n\\n\\n----------------------------------------\\n\\n\\n<MAIN>\\nBE A SUPER SPINNER! \\n\\n<SUB>\\nPlay to help your Club\\nWIN <Prize>\\n\\nBadge: <Charm Pack> included\\n\\n\\nCTA: \\n\\nT&C: Event ends Jan. 4th 11PM PST\";\nconst artLeadersNotes=\"\\ud83c\\udfa8 Design Tips:\\n\\n<MAIN>\\nBE A SUPER CLUB LEADER! \\n\\n<SUB>\\nPlay to help your Club\\n& WIN HEROIC PRIZES\\n\\nBadge: <Charm Pack> included\\n\\n\\nCTA: \\n\\nT&C: Event ends Jan. 4th 11PM PST\";\nconst reminderName=\"***Reminder 24 Hours rewarding for Conquest - Set date to one day after the CQ \";\nreturn $input.all().flatMap((item,index)=>{\n  const parentGid=$items(\"Create Turbo Conquest Parent Task\")[index].json.gid;\n  const passThrough=parentInputs[index].json._passThrough||{};\n  const subtaskPrefix=passThrough.subtaskPrefix||\"\";\n  const parentStartOn=passThrough.parentStartOn;\n  const parentDueOn=passThrough.parentDueOn;\n  if(!parentGid)return[];\n  const configDueOn=conquestConfigDue(parentStartOn);\n  const reminderDueOn=addDaysUTC(parentDueOn,1);\n  return[\n    {json:{parentGid,name:reminderName,assigneeGid:null,dueOn:reminderDueOn,notes:\"\",_passThrough:{projectGids:[\"1202103624709695\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Club Leaders - Art `,assigneeGid:null,dueOn:parentStartOn,notes:artLeadersNotes,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - All Players - Art `,assigneeGid:null,dueOn:parentStartOn,notes:artAllNotes,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Copy `,assigneeGid:\"1203098753090568\",dueOn:configDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Config`,assigneeGid:\"1202726613255877\",dueOn:configDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}}\n  ];\n});"}, "Conquest_Magicals": {"label": "Conquest Magicals", "tagId": "1214828289626583", "dateField": "start_on", "parentProjectId": "1202103624709695", "customFields": {"1202103624709739": "1202103624709751", "1202961503380245": "FEATURE + CONQUEST"}, "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchItems=$items(\"Search Conquest Magicals Tasks\");\nconst allTasks=searchItems.flatMap(it=>(it.json&&it.json.data)||[]);\nconst matches=allTasks.filter(t=>t.start_on);\nfunction isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction isSundayUTC(iso){const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));return new Date(Date.UTC(y,m-1,d)).getUTCDay()===0;}\nfunction diffDaysInclusive(startIso,endIso){const[sy,sm,sd]=startIso.split(\"-\").map(n=>parseInt(n,10));const[ey,em,ed]=endIso.split(\"-\").map(n=>parseInt(n,10));const start=Date.UTC(sy,sm-1,sd);const end=Date.UTC(ey,em-1,ed);return Math.round((end-start)/86400000)+1;}\nfunction addDaysUTC(iso,days){const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,\"0\")}-${String(dt.getUTCDate()).padStart(2,\"0\")}`;}\nreturn matches.map(matchingTask=>{\n  const rawStart=matchingTask.start_on;\n  const rawEnd=matchingTask.due_on||rawStart;\n  const endPlusOne=addDaysUTC(rawEnd,1);\n  const startPrefix=isoToDDMM(rawStart);\n  const endPrefix=isoToDDMM(rawEnd);\n  const endPlusOnePrefix=isoToDDMM(endPlusOne);\n  const fullPrefix=startPrefix===endPrefix?startPrefix:`${startPrefix} - ${endPrefix}`;\n  const days=diffDaysInclusive(rawStart,rawEnd);\n  const dayLabel=days===1?\"Day\":\"Days\";\n  const endHour=isSundayUTC(rawEnd)?\"06:00\":\"07:00\";\n  const baseName=`${days} ${dayLabel} Conquest with Magicals`;\n  const parentName=`${fullPrefix} - ${baseName} [${startPrefix} 07:10 - ${endPlusOnePrefix} ${endHour}]`;\n  const subtaskPrefix=parentName;\n  const parentHtml=(\"<body><strong>General Info:</strong>\\n<ul><li>For <code><strong>X</strong></code> Day(s)</li><li>Audience: <code>Gold 3+ Clubbers</code></li><li>Theme \\u2192 <code>Generic</code></li><li>Other specifics: <code>Specify if needed</code> </li></ul><hr /><strong>Economy:</strong>\\n<ul><li>Please update - all fields should be filled: </li><li>The final Prize includes: <code>Charms + Magicals</code></li><li>Slots as per config: </li></ul>\\n<hr /><strong>Art/Copy</strong>:\\n<ul><li><strong>Art/Copy:</strong></li><li><code>2</code> banners: Leaders/Clubbers</li></ul>\\n<strong>Please specify the banners and the theme:</strong> \\nTheme: <code>Generic</code>\\n<ul><li>Banners:</li><ul><li>All Players</li><li>Leaders</li></ul></ul><hr /><strong>OPS</strong>:\\n<ul><li>\\n</li></ul></body>\").replace(\"<strong>X</strong></code> Day(s)\",`<strong>${days}</strong></code> ${dayLabel}`);\n  return{json:{parentName,parentHtml,startOn:rawStart===rawEnd?null:rawStart,endOn:rawEnd,_passThrough:{fullPrefix,baseName,subtaskPrefix,parentStartOn:rawStart,parentDueOn:rawEnd,endHour}}};\n});", "buildCode": "function addDaysUTC(iso,days){if(!iso)return null;const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,\"0\")}-${String(dt.getUTCDate()).padStart(2,\"0\")}`;}\nfunction conquestConfigDue(parentStartIso){\n  if(!parentStartIso)return null;\n  const[y,m,d]=parentStartIso.split(\"-\").map(x=>parseInt(x,10));\n  const dt=new Date(Date.UTC(y,m-1,d));\n  dt.setUTCDate(dt.getUTCDate()-3);\n  const wd=dt.getUTCDay();\n  if(wd===6)dt.setUTCDate(dt.getUTCDate()+4);\n  else if(wd===0)dt.setUTCDate(dt.getUTCDate()+3);\n  else if(wd===1)dt.setUTCDate(dt.getUTCDate()+2);\n  else if(wd===2)dt.setUTCDate(dt.getUTCDate()+1);\n  return dt.toISOString().split(\"T\")[0];\n}\nconst parentInputs=$items(\"Process Conquest Magicals Tags\");\nconst artAllNotes=\"\\ud83c\\udfa8 Design Tips:\\n\\n\\n----------------------------------------\\n\\n\\n<MAIN>\\nBE A SUPER SPINNER! \\n\\n<SUB>\\nPlay to help your Club\\nWIN <Prize>\\n\\nBadge: <Charm Pack> included\\n\\n\\nCTA: \\n\\nT&C: Event ends Jan. 4th 11PM PST\";\nconst artLeadersNotes=\"\\ud83c\\udfa8 Design Tips:\\n\\n<MAIN>\\nBE A SUPER CLUB LEADER! \\n\\n<SUB>\\nPlay to help your Club\\n& WIN HEROIC PRIZES\\n\\nBadge: <Charm Pack> included\\n\\n\\nCTA: \\n\\nT&C: Event ends Jan. 4th 11PM PST\";\nconst reminderName=\"***Reminder 24 Hours rewarding for Conquest - Set date to one day after the CQ \";\nreturn $input.all().flatMap((item,index)=>{\n  const parentGid=$items(\"Create Conquest Magicals Parent Task\")[index].json.gid;\n  const passThrough=parentInputs[index].json._passThrough||{};\n  const subtaskPrefix=passThrough.subtaskPrefix||\"\";\n  const parentStartOn=passThrough.parentStartOn;\n  const parentDueOn=passThrough.parentDueOn;\n  if(!parentGid)return[];\n  const configDueOn=conquestConfigDue(parentStartOn);\n  const reminderDueOn=addDaysUTC(parentDueOn,1);\n  return[\n    {json:{parentGid,name:reminderName,assigneeGid:null,dueOn:reminderDueOn,notes:\"\",_passThrough:{projectGids:[\"1202103624709695\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Club Leaders - Art `,assigneeGid:null,dueOn:parentStartOn,notes:artLeadersNotes,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - All Players - Art `,assigneeGid:null,dueOn:parentStartOn,notes:artAllNotes,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Copy `,assigneeGid:\"1203098753090568\",dueOn:configDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Config`,assigneeGid:\"1202726613255877\",dueOn:configDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}}\n  ];\n});"}, "Turbo_Conquest_Magicals": {"label": "Turbo Conquest Magicals", "tagId": "1214828695376724", "dateField": "due_on", "parentProjectId": "1202103624709695", "customFields": {"1202103624709739": "1202103624709751", "1202961503380245": "FEATURE + CONQUEST"}, "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchItems=$items(\"Search Turbo Conquest Magicals Tasks\");\nconst allTasks=searchItems.flatMap(it=>(it.json&&it.json.data)||[]);\nconst matches=allTasks.filter(t=>t.due_on||t.start_on);\nfunction isoToDDMM(iso){if(!iso)return null;return`${iso.slice(8,10)}/${iso.slice(5,7)}`;}\nfunction isSundayUTC(iso){const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));return new Date(Date.UTC(y,m-1,d)).getUTCDay()===0;}\nfunction addDaysUTC(iso,days){const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,\"0\")}-${String(dt.getUTCDate()).padStart(2,\"0\")}`;}\nreturn matches.map(matchingTask=>{\n  const theDate=matchingTask.start_on||matchingTask.due_on;\n  const endPlusOne=addDaysUTC(theDate,1);\n  const datePrefix=isoToDDMM(theDate);\n  const endPlusOnePrefix=isoToDDMM(endPlusOne);\n  const endHour=isSundayUTC(theDate)?\"06:00\":\"07:00\";\n  const baseName=`Turbo Conquest with Magicals`;\n  const parentName=`${datePrefix} - ${baseName} [Ends ${endPlusOnePrefix} ${endHour}]`;\n  const subtaskPrefix=parentName;\n  const parentHtml=\"<body><strong>General Info:</strong>\\n<ul><li>For <code><strong>1</strong></code> Day</li><li>Audience: <code>Gold 3+ Clubbers</code></li><li>Theme \\u2192 <code>Generic</code></li><li>Other specifics: <code>Specify if needed</code> </li></ul><hr /><strong>Economy:</strong>\\n<ul><li>Please update - all fields should be filled: </li><li>The final Prize includes: <code>Charms + Magicals</code></li><li>Slots as per config: </li></ul>\\n<hr /><strong>Art/Copy</strong>:\\n<ul><li><strong>Art/Copy:</strong></li><li><code>2</code> banners: Leaders/Clubbers</li></ul>\\n<strong>Please specify the banners and the theme:</strong> \\nTheme: <code>Generic</code>\\n<ul><li>Banners:</li><ul><li>All Players</li><li>Leaders</li></ul></ul><hr /><strong>OPS</strong>:\\n<ul><li>\\n</li></ul></body>\";\n  return{json:{parentName,parentHtml,startOn:null,endOn:theDate,_passThrough:{fullPrefix:datePrefix,baseName,subtaskPrefix,parentStartOn:theDate,parentDueOn:theDate,endHour}}};\n});", "buildCode": "function addDaysUTC(iso,days){if(!iso)return null;const[y,m,d]=iso.split(\"-\").map(n=>parseInt(n,10));const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()+days);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,\"0\")}-${String(dt.getUTCDate()).padStart(2,\"0\")}`;}\nfunction conquestConfigDue(parentStartIso){\n  if(!parentStartIso)return null;\n  const[y,m,d]=parentStartIso.split(\"-\").map(x=>parseInt(x,10));\n  const dt=new Date(Date.UTC(y,m-1,d));\n  dt.setUTCDate(dt.getUTCDate()-3);\n  const wd=dt.getUTCDay();\n  if(wd===6)dt.setUTCDate(dt.getUTCDate()+4);\n  else if(wd===0)dt.setUTCDate(dt.getUTCDate()+3);\n  else if(wd===1)dt.setUTCDate(dt.getUTCDate()+2);\n  else if(wd===2)dt.setUTCDate(dt.getUTCDate()+1);\n  return dt.toISOString().split(\"T\")[0];\n}\nconst parentInputs=$items(\"Process Turbo Conquest Magicals Tags\");\nconst artAllNotes=\"\\ud83c\\udfa8 Design Tips:\\n\\n\\n----------------------------------------\\n\\n\\n<MAIN>\\nBE A SUPER SPINNER! \\n\\n<SUB>\\nPlay to help your Club\\nWIN <Prize>\\n\\nBadge: <Charm Pack> included\\n\\n\\nCTA: \\n\\nT&C: Event ends Jan. 4th 11PM PST\";\nconst artLeadersNotes=\"\\ud83c\\udfa8 Design Tips:\\n\\n<MAIN>\\nBE A SUPER CLUB LEADER! \\n\\n<SUB>\\nPlay to help your Club\\n& WIN HEROIC PRIZES\\n\\nBadge: <Charm Pack> included\\n\\n\\nCTA: \\n\\nT&C: Event ends Jan. 4th 11PM PST\";\nconst reminderName=\"***Reminder 24 Hours rewarding for Conquest - Set date to one day after the CQ \";\nreturn $input.all().flatMap((item,index)=>{\n  const parentGid=$items(\"Create Turbo Conquest Magicals Parent Task\")[index].json.gid;\n  const passThrough=parentInputs[index].json._passThrough||{};\n  const subtaskPrefix=passThrough.subtaskPrefix||\"\";\n  const parentStartOn=passThrough.parentStartOn;\n  const parentDueOn=passThrough.parentDueOn;\n  if(!parentGid)return[];\n  const configDueOn=conquestConfigDue(parentStartOn);\n  const reminderDueOn=addDaysUTC(parentDueOn,1);\n  return[\n    {json:{parentGid,name:reminderName,assigneeGid:null,dueOn:reminderDueOn,notes:\"\",_passThrough:{projectGids:[\"1202103624709695\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - OPS`,assigneeGid:null,dueOn:parentStartOn,notes:\"\",_passThrough:{projectGids:[\"1202720677378175\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Club Leaders - Art `,assigneeGid:null,dueOn:parentStartOn,notes:artLeadersNotes,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - All Players - Art `,assigneeGid:null,dueOn:parentStartOn,notes:artAllNotes,_passThrough:{projectGids:[\"1202103624709698\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Copy `,assigneeGid:\"1203098753090568\",dueOn:configDueOn,notes:\"\",_passThrough:{projectGids:[\"1202805118467140\"],isConfig:false}}},\n    {json:{parentGid,name:`${subtaskPrefix} - Config`,assigneeGid:\"1202726613255877\",dueOn:configDueOn,notes:\"\",_passThrough:{projectGids:[\"1201933871229088\",\"1202681320802528\"],isConfig:true}}}\n  ];\n});"}}}
+</script>
+
+<script>
+const CLIENT_ID     = "1214940964091051";
+const CLIENT_SECRET = "20d6386dcb65b65a8043630f2121f600";
+const REDIRECT_URI  = window.location.href.split("?")[0].split("#")[0];
+const ASANA_AUTH    = "https://app.asana.com/-/oauth_authorize";
+const ASANA_TOKEN   = "https://app.asana.com/-/oauth_token";
+const ASANA_API     = "https://app.asana.com/api/1.0";
+
+let accessToken = localStorage.getItem("asana_token") || null;
+
+const SPEC = JSON.parse(document.getElementById("pipeline-spec").textContent);
+const WORKSPACE_GID = SPEC.workspaceGid;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+function loginWithAsana() {
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem("oauth_state", state);
+  window.location.href = `${ASANA_AUTH}?${new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code", state })}`;
+}
+async function exchangeCode(code) {
+  const res = await fetch(ASANA_TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "authorization_code", client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, code }) });
+  const data = await res.json();
+  if (data.access_token) { accessToken = data.access_token; localStorage.setItem("asana_token", accessToken); return true; }
+  return false;
+}
+function logout() {
+  localStorage.removeItem("asana_token");
+  accessToken = null;
+  document.getElementById("appArea").style.display = "none";
+  document.getElementById("loginArea").style.display = "block";
+}
+
+// ── ASANA API HELPERS ────────────────────────────────────────────────────
+async function asanaGet(path) {
+  const res = await fetch(`${ASANA_API}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPost(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPut(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── N8N CODE-NODE SHIM ───────────────────────────────────────────────────
+// Runs the workflow's original Code-node bodies verbatim, so business logic
+// (HTML templates, subtask lists, date math) stays byte-identical to n8n.
+function runBatchCode(code, itemsMap) {
+  const $items = (name) => itemsMap[name] || [];
+  const $input = { all: () => itemsMap.__input || [] };
+  return new Function("$items", "$input", code)($items, $input);
+}
+
+// ── PIPELINE UI ──────────────────────────────────────────────────────────
+const PIPELINE_LABELS = {
+  Club_Chips: "Club Chips",
+  Club_Charms: "Club Charms",
+  Club_ChipsPlusCharms: "Club Chips+Charms",
+  Conquest: "Conquest",
+  Turbo_Conquest: "Turbo Conquest",
+  Conquest_Magicals: "Conquest Magicals",
+  Turbo_Conquest_Magicals: "Turbo Conquest Magicals",
+};
+const pipelinesEl = document.getElementById("pipelines");
+Object.keys(SPEC.pipelines).forEach((key) => {
+  const div = document.createElement("div");
+  div.className = "pipe-item";
+  div.innerHTML = `<input type="checkbox" id="pipe_${key}" checked><label for="pipe_${key}">${PIPELINE_LABELS[key] || key}</label>`;
+  pipelinesEl.appendChild(div);
+});
+function setAllPipelines(v) {
+  Object.keys(SPEC.pipelines).forEach(key => document.getElementById(`pipe_${key}`).checked = v);
+}
+
+// ── LOG PANEL ────────────────────────────────────────────────────────────
+const logEl = document.getElementById("log");
+function log(text, cls) {
+  logEl.style.display = "block";
+  const div = document.createElement("div");
+  div.className = "line" + (cls ? " " + cls : "");
+  div.textContent = text;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ── PIPELINE RUNNER ──────────────────────────────────────────────────────
+async function runPipeline(key, rangeStart, rangeEnd) {
+  const p = SPEC.pipelines[key];
+  const label = p.label;
+  log(`▶ ${label}: searching planning tasks by ${p.dateField} ${rangeStart} – ${rangeEnd}…`, "muted");
+
+  const q = new URLSearchParams({
+    "tags.any": p.tagId,
+    [`${p.dateField}.after`]: rangeStart,
+    [`${p.dateField}.before`]: rangeEnd,
+    "opt_fields": "name,tags.name,start_on,due_on",
+  });
+  const searchRes = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
+  await sleep(120);
+
+  const processedItems = runBatchCode(p.processCode, {
+    [`Search ${label} Tasks`]: [{ json: searchRes }],
+  });
+
+  if (processedItems.length === 0) {
+    log(`  ${label}: no matching planning task found in that range — skipped.`, "warn");
+    return;
+  }
+
+  const parentGidCtx = [];
+  for (const item of processedItems) {
+    try {
+      const created = await asanaPost("/tasks", {
+        name: item.json.parentName,
+        workspace: WORKSPACE_GID,
+        projects: [p.parentProjectId],
+      });
+      const gid = created.data.gid;
+      parentGidCtx.push({ json: { gid } });
+      await sleep(120);
+
+      await asanaPut(`/tasks/${gid}`, {
+        start_on: item.json.startOn,
+        due_on: item.json.endOn,
+        custom_fields: p.customFields,
+      });
+      await sleep(120);
+
+      await asanaPut(`/tasks/${gid}`, { html_notes: item.json.parentHtml });
+      await sleep(120);
+
+      log(`  ✓ ${label}: created parent "${item.json.parentName}"`, "ok");
+    } catch (e) {
+      parentGidCtx.push({ json: { gid: null } });
+      log(`  ✗ ${label}: failed to create parent "${item.json.parentName}" — ${e.message}`, "err");
+    }
+  }
+
+  const subtaskDefs = runBatchCode(p.buildCode, {
+    [`Process ${label} Tags`]: processedItems,
+    [`Create ${label} Parent Task`]: parentGidCtx,
+    __input: new Array(processedItems.length).fill({ json: {} }),
+  });
+
+  const subtaskResults = [];
+  for (const def of subtaskDefs) {
+    const j = def.json;
+    if (!j.parentGid) { subtaskResults.push(null); continue; }
+    try {
+      const created = await asanaPost(`/tasks/${j.parentGid}/subtasks`, {
+        name: j.name,
+        assignee: j.assigneeGid,
+        due_on: j.dueOn,
+        notes: j.notes,
+      });
+      subtaskResults.push({ gid: created.data.gid });
+      log(`    ✓ subtask "${j.name}"`, "ok");
+    } catch (e) {
+      subtaskResults.push(null);
+      log(`    ✗ subtask "${j.name}" — ${e.message}`, "err");
+    }
+    await sleep(120);
+  }
+
+  const projectRows = subtaskDefs.flatMap((def, idx) => {
+    const res = subtaskResults[idx];
+    if (!res) return [];
+    const pass = def.json._passThrough || {};
+    const projectGids = pass.projectGids || [];
+    const isConfig = pass.isConfig || false;
+    return projectGids.map(pGid => ({ taskGid: res.gid, projectGid: pGid, isConfig }));
+  });
+
+  for (const row of projectRows) {
+    try {
+      if (row.isConfig && row.projectGid === p.configProjectId) {
+        await asanaPost(`/sections/${p.configSectionId}/addTask`, { task: row.taskGid });
+      } else {
+        await asanaPost(`/tasks/${row.taskGid}/addProject`, { project: row.projectGid });
+      }
+      await sleep(120);
+    } catch (e) {
+      log(`    ✗ project/section link failed for a subtask — ${e.message}`, "err");
+    }
+  }
+
+  log(`■ ${label}: done.`, "muted");
+}
+
+async function runAll() {
+  const rangeStart = document.getElementById("rangeStart").value;
+  const rangeEnd = document.getElementById("rangeEnd").value;
+
+  if (!rangeStart || !rangeEnd) {
+    alert("Enter both a range start and range end date.");
+    return;
+  }
+
+  const selected = Object.keys(SPEC.pipelines).filter(key => document.getElementById(`pipe_${key}`).checked);
+  if (selected.length === 0) {
+    alert("Select at least one pipeline.");
+    return;
+  }
+
+  const labels = selected.map(k => PIPELINE_LABELS[k] || k).join(", ");
+  if (!confirm(`This will create real Asana tasks.\n\nRange: ${rangeStart} – ${rangeEnd}\nPipelines: ${labels}\n\nContinue?`)) return;
+
+  const btn = document.getElementById("runBtn");
+  btn.disabled = true;
+  logEl.innerHTML = "";
+  logEl.style.display = "block";
+  log(`Starting run for range ${rangeStart} – ${rangeEnd} × ${selected.length} pipeline(s)…`, "muted");
+
+  for (const key of selected) {
+    try {
+      await runPipeline(key, rangeStart, rangeEnd);
+    } catch (e) {
+      log(`✗ ${PIPELINE_LABELS[key] || key}: ${e.message}`, "err");
+    }
+  }
+
+  log("All done.", "ok");
+  btn.disabled = false;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code"), state = params.get("state"), error = params.get("error");
+  if (code || error) window.history.replaceState({}, document.title, window.location.pathname);
+  if (error) {
+    document.getElementById("oauthError").style.display = "block";
+    document.getElementById("oauthError").textContent = `Asana login error: ${error}`;
+    return;
+  }
+  if (code) {
+    const saved = sessionStorage.getItem("oauth_state");
+    if (state !== saved) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "OAuth state mismatch.";
+      return;
+    }
+    sessionStorage.removeItem("oauth_state");
+    const ok = await exchangeCode(code);
+    if (!ok) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "Failed to exchange login code.";
+      return;
+    }
+  }
+  if (accessToken) {
+    document.getElementById("loginArea").style.display = "none";
+    document.getElementById("appArea").style.display = "block";
+    try {
+      const me = await asanaGet("/users/me?opt_fields=name");
+      document.getElementById("userLabel").textContent = `Signed in as ${me.data.name}`;
+    } catch (e) { /* ignore */ }
+  } else {
+    document.getElementById("loginArea").style.display = "block";
+    document.getElementById("appArea").style.display = "none";
+  }
+}
+init();
+</script>
+</body>
+</html>
