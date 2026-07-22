@@ -26,6 +26,29 @@
     --accent-purple-bg: #F0ECFB;
     --radius: 14px;
     --radius-sm: 8px;
+    --shadow-hover: rgba(0,0,0,0.07);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b0c0e;
+      --surface: #13151a;
+      --surface2: #1c1f27;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.16);
+      --text: #f0f0ee;
+      --text-2: #b8b5ae;
+      --text-3: #7a776f;
+      --accent-blue: #7c9eff;
+      --accent-blue-bg: rgba(124,158,255,0.12);
+      --accent-green: #6ae8a0;
+      --accent-green-bg: rgba(106,232,160,0.10);
+      --accent-amber: #e8b46a;
+      --accent-amber-bg: rgba(232,180,106,0.10);
+      --accent-purple: #9b8cff;
+      --accent-purple-bg: rgba(155,140,255,0.12);
+      --shadow-hover: rgba(0,0,0,0.3);
+    }
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -101,7 +124,7 @@
   .tool-card:hover {
     border-color: var(--border-strong);
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+    box-shadow: 0 8px 24px var(--shadow-hover);
   }
   .tool-card:active { transform: translateY(0); }
 

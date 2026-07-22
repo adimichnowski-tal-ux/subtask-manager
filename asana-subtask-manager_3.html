@@ -17,9 +17,24 @@
     --config: #e86a9b; --config-bg: rgba(232,106,155,0.1); --config-border: rgba(232,106,155,0.25);
     --success: #6ae8a0; --success-bg: rgba(106,232,160,0.08);
     --danger: #e87a6a; --warn: #e8b46a; --warn-bg: rgba(232,180,106,0.08); --accent: #9b8cff;
+    --glow: rgba(155,140,255,0.08); --accent-tint: rgba(155,140,255,0.05);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f4f0; --surface: #ffffff; --surface2: #efede8;
+      --border: rgba(0,0,0,0.08); --border-strong: rgba(0,0,0,0.16);
+      --text: #1a1917; --muted: #6b6860;
+      --art: #9b6a10; --art-bg: rgba(155,106,16,0.10); --art-border: rgba(155,106,16,0.25);
+      --ops: #1a6fa8; --ops-bg: rgba(26,111,168,0.10); --ops-border: rgba(26,111,168,0.25);
+      --copy: #7a3fc0; --copy-bg: rgba(122,63,192,0.10); --copy-border: rgba(122,63,192,0.25);
+      --config: #b8305f; --config-bg: rgba(184,48,95,0.10); --config-border: rgba(184,48,95,0.25);
+      --success: #1a7a4a; --success-bg: rgba(26,122,74,0.08);
+      --danger: #b23a2e; --warn: #9b5a00; --warn-bg: rgba(155,90,0,0.08); --accent: #6a4fd6;
+      --glow: rgba(106,79,214,0.06); --accent-tint: rgba(106,79,214,0.05);
+    }
   }
   body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px 80px; position: relative; overflow-x: hidden; }
-  body::before { content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 700px; height: 400px; background: radial-gradient(ellipse, rgba(155,140,255,0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  body::before { content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 700px; height: 400px; background: radial-gradient(ellipse, var(--glow) 0%, transparent 70%); pointer-events: none; z-index: 0; }
   .wrapper { width: 100%; max-width: 620px; position: relative; z-index: 1; }
   header { margin-bottom: 48px; text-align: center; }
   .logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--surface2); border: 1px solid var(--border-strong); border-radius: 12px; margin-bottom: 20px; font-size: 20px; }
@@ -41,7 +56,7 @@
   .label-tag.config { background: var(--config-bg); color: var(--config); border: 1px solid var(--config-border); }
   .optional-badge { display: inline-block; font-size: 9px; font-weight: 500; padding: 1px 5px; border-radius: 4px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); margin-left: 6px; vertical-align: 2px; }
   .field input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.2s, background 0.2s; -webkit-appearance: none; }
-  .field input:focus { border-color: var(--accent); background: rgba(155,140,255,0.05); }
+  .field input:focus { border-color: var(--accent); background: var(--accent-tint); }
   .field input::placeholder { color: var(--muted); opacity: 0.5; }
   input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
 
@@ -64,8 +79,8 @@
   /* Config preview */
   .config-preview { display: none; align-items: center; gap: 8px; margin-top: 8px; font-family: 'DM Mono', monospace; font-size: 12px; padding: 8px 12px; border-radius: 8px; border: 1px solid; }
   .config-preview.normal   { background: var(--config-bg); border-color: var(--config-border); color: var(--config); }
-  .config-preview.adjusted { background: var(--warn-bg); border-color: rgba(232,180,106,0.25); color: var(--warn); }
-  .shared-date-note { display: flex; align-items: center; gap: 8px; background: rgba(232,200,106,0.06); border: 1px solid rgba(232,200,106,0.15); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: -4px; margin-bottom: 10px; }
+  .config-preview.adjusted { background: var(--warn-bg); border-color: var(--warn-border, var(--art-border)); color: var(--warn); }
+  .shared-date-note { display: flex; align-items: center; gap: 8px; background: var(--art-bg); border: 1px solid var(--art-border); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: -4px; margin-bottom: 10px; }
   .shared-date-note .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
   .shared-date-note .dot.art { background: var(--art); }
   .shared-date-note .dot.ops { background: var(--ops); }
