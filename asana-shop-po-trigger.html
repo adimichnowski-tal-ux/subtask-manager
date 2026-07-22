@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asana Shop &amp; PO Trigger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0c0e; --surface: #13151a; --surface2: #1c1f27;
+    --border: rgba(255,255,255,0.07); --border-strong: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7d86;
+    --accent: #9b8cff; --accent-hover: #b0a4ff;
+    --success: #6ae8a0; --success-bg: rgba(106,232,160,0.08);
+    --danger: #e87a6a; --danger-bg: rgba(232,122,106,0.08);
+    --warn: #e8b46a; --warn-bg: rgba(232,180,106,0.08);
+  }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px 80px; position: relative; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 700px; height: 400px; background: radial-gradient(ellipse, rgba(155,140,255,0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  .wrapper { width: 100%; max-width: 680px; position: relative; z-index: 1; }
+  header { margin-bottom: 40px; text-align: center; }
+  .logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--surface2); border: 1px solid var(--border-strong); border-radius: 12px; margin-bottom: 20px; font-size: 20px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 12px; margin: 0 0 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-strong);
+    background: var(--surface2); color: var(--text); font-size: 14px; margin-bottom: 14px; font-family: 'DM Mono', monospace;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .pipelines { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 8px; }
+  .pipe-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+  .pipe-item input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+  .pipe-item label { margin: 0; color: var(--text); font-size: 14px; cursor: pointer; }
+  .pipe-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+  .pipe-actions button { background: none; border: 1px solid var(--border-strong); color: var(--muted); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .pipe-actions button:hover { color: var(--text); border-color: var(--accent); }
+  .hint { font-size: 12px; color: var(--muted); margin: -8px 0 14px; line-height: 1.4; }
+  button.primary {
+    width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent);
+    color: #0b0c0e; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .userbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: var(--muted); }
+  .userbar a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .userbar a:hover { text-decoration: underline; }
+  #loginArea { text-align: center; }
+  #loginArea .card { text-align: left; }
+  #loginArea p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  #oauthError { display: none; background: var(--danger-bg); color: var(--danger); border-radius: 8px; padding: 12px 14px; font-size: 13px; margin-bottom: 16px; }
+  #appArea { display: none; }
+  #log {
+    margin-top: 8px; max-height: 320px; overflow-y: auto; background: #08090b; border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.6;
+  }
+  #log .line { white-space: pre-wrap; word-break: break-word; }
+  #log .ok { color: var(--success); }
+  #log .err { color: var(--danger); }
+  #log .warn { color: var(--warn); }
+  #log .muted { color: var(--muted); }
+  footer { margin-top: 32px; text-align: center; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <div class="logo-mark">⚡</div>
+    <h1>Asana Shop &amp; PO Trigger</h1>
+    <div class="sub">Runs the "Asana Shop / PO" automation directly against the Asana API.</div>
+  </header>
+
+  <div id="oauthError"></div>
+
+  <div id="loginArea">
+    <div class="card">
+      <h2>Connect your Asana account</h2>
+      <p>Sign in with Asana so tasks are created under your own account.</p>
+      <button class="primary" onclick="loginWithAsana()">Login with Asana</button>
+    </div>
+  </div>
+
+  <div id="appArea">
+    <div class="userbar">
+      <span id="userLabel"></span>
+      <a onclick="logout()">Log out</a>
+    </div>
+
+    <div class="card">
+      <h2>Dates</h2>
+      <div class="row">
+        <div>
+          <label for="rangeStart">Range start</label>
+          <input type="date" id="rangeStart">
+        </div>
+        <div>
+          <label for="rangeEnd">Range end</label>
+          <input type="date" id="rangeEnd">
+        </div>
+      </div>
+      <label for="specificDates">Or specific dates (overrides range above)</label>
+      <textarea id="specificDates" placeholder="2026-07-11, 2026-07-15&#10;2026-07-20"></textarea>
+      <div class="hint">One or more YYYY-MM-DD dates, comma or newline separated. Leave blank to use the range instead.</div>
+    </div>
+
+    <div class="card">
+      <h2>Pipelines to run</h2>
+      <div class="pipe-actions">
+        <button type="button" onclick="setAllPipelines(true)">Select all</button>
+        <button type="button" onclick="setAllPipelines(false)">Select none</button>
+      </div>
+      <div class="pipelines" id="pipelines"></div>
+      <div class="hint">Each pipeline looks for an existing planning task tagged for that offer type on the chosen date(s), then builds the parent task + subtasks from it. Dates with no matching planning task are skipped.</div>
+    </div>
+
+    <button class="primary" id="runBtn" onclick="runAll()">Run</button>
+    <div id="log" style="display:none;"></div>
+  </div>
+
+  <footer>Powered by Asana API</footer>
+</div>
+
+<script id="pipeline-spec" type="application/json">
+{"workspaceGid": "54393662698285", "buildDatesCode": "const rangeStart = ($json.rangeStart || \"\").trim();\nconst rangeEnd = ($json.rangeEnd || \"\").trim();\nconst specificRaw = ($json.specificDates || \"\").trim();\n\nfunction parseSpecificDates(s) {\n  return s.split(/[\\n,]+/).map((x) => x.trim()).filter(Boolean).filter((x) => /^\\d{4}-\\d{2}-\\d{2}$/.test(x));\n}\n\nfunction addDaysUTC(iso, days) {\n  const [y, m, d] = iso.split(\"-\").map((n) => parseInt(n, 10));\n  const dt = new Date(Date.UTC(y, m - 1, d));\n  dt.setUTCDate(dt.getUTCDate() + days);\n  const yyyy = dt.getUTCFullYear();\n  const mm = String(dt.getUTCMonth() + 1).padStart(2, \"0\");\n  const dd = String(dt.getUTCDate()).padStart(2, \"0\");\n  return `${yyyy}-${mm}-${dd}`;\n}\n\nfunction buildRangeDates(startIso, endIso) {\n  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(startIso) || !/^\\d{4}-\\d{2}-\\d{2}$/.test(endIso)) return [];\n  const start = startIso <= endIso ? startIso : endIso;\n  const end = startIso <= endIso ? endIso : startIso;\n  const out = [];\n  let cur = start;\n  while (cur <= end) {\n    out.push(cur);\n    cur = addDaysUTC(cur, 1);\n  }\n  return out;\n}\n\nlet dates = specificRaw ? parseSpecificDates(specificRaw) : buildRangeDates(rangeStart, rangeEnd);\nreturn dates.map((dueOn) => ({ json: { ...$json, dueOn } }));", "pipelines": {"Shop": {"label": "Shop", "tagId": "1213816973650200,1213816973650195,1213816973650199,1213816434851197,1213816973650196,1213816973650197,1213816973650198,1213817854891566,1213817854891567,1213817854891568,1213817854891569,1213817854891570,1213817854891571,1213817854891572,1213820460533885,1213820460533886,1213820460533887,1213820460533888,1213820460533889,1213820760195563,1213820760195564,1213817323707361,1213817323707362,1213817323707363,1213817323707364,1213817323707365,1213817323707371,1213817323707372,1214104494739918,1214104494739919,1214104494739920,1214104494739921,1214104494739922,1214104494739923,1214104494739924,1214104494739926,1214104494739927,1214104494739928,1214104494739929,1214104494739930,1214104494739931,1214106072924810", "parentProjectId": "1202103624709695", "dateField": "due_on", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchResults = $items(\"Search Shop Tasks\");\nconst dateInfos = $items(\"Expand Date Range\");\n\nconst tagMap = {\n  // --- ORIGINAL X1 ---\n  \"Shop_X1_Charms\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms\", promoName: \"Charms\", htmlSuf: \"\", type: \"charms\", tier: \"x1\", isTT: false },\n  \"Shop_X1_Charms_X2_Tokens\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + X2 Tokens\", promoName: \"X2 Tokens\", htmlSuf: \" + X2 Tokens\", type: \"charms\", tier: \"x1\", isTT: false },\n  \"Shop_X1_Charms_X2_Tickets\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + X2 Tickets\", promoName: \"X2 Tickets\", htmlSuf: \" + X2 Tickets\", type: \"charms\", tier: \"x1\", isTT: false },\n  \"Shop_X1_Charms_More_Tickets\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + More Tickets\", promoName: \"More Tickets\", htmlSuf: \" + More Tickets\", type: \"charms\", tier: \"x1\", isTT: false },\n  \"Shop_X1_Charms_More_Tickets_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + More Tickets + X2 HP + X2 Tokens\", promoName: \"More Everything\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens\", type: \"charms\", tier: \"x1\", isTT: false },\n  \"Shop_X1_Charms_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + X2 Tickets + X2 Tokens + X2 HPs\", promoName: \"X2 Everything\", htmlSuf: \" + X2 Tickets + X2 HPs + X2 Tokens\", type: \"charms\", tier: \"x1\", isTT: false },\n  \"Shop_X1_Magicals\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Magicals\", promoName: \"Magical Day\", htmlSuf: \"\", type: \"magical\", tier: \"x1\", isTT: false },\n\n  // --- ORIGINAL X2 ---\n  \"Shop_X2_Charms\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms\", promoName: \"More Charms\", htmlSuf: \"\", type: \"charms\", tier: \"x2\", isTT: false },\n  \"Shop_X2_Charms_X2_Tokens\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + X2 Tokens\", promoName: \"X2 Tokens\", htmlSuf: \" + X2 Tokens\", type: \"charms\", tier: \"x2\", isTT: false },\n  \"Shop_X2_Charms_X2_Tickets\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + X2 Tickets\", promoName: \"X2 Tickets\", htmlSuf: \" + X2 Tickets\", type: \"charms\", tier: \"x2\", isTT: false },\n  \"Shop_X2_Charms_More_Tickets\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + More Tickets\", promoName: \"More Tickets\", htmlSuf: \" + More Tickets\", type: \"charms\", tier: \"x2\", isTT: false },\n  \"Shop_X2_Charms_More_Tickets_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + More Tickets + X2 HP + X2 Tokens\", promoName: \"More Everything\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens\", type: \"charms\", tier: \"x2\", isTT: false },\n  \"Shop_X2_Charms_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + X2 Tickets + X2 Tokens + X2 HPs\", promoName: \"X2 Everything\", htmlSuf: \" + X2 Tickets + X2 HPs + X2 Tokens\", type: \"charms\", tier: \"x2\", isTT: false },\n  \"Shop_X2_Magicals\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Magicals\", promoName: \"Magical Day\", htmlSuf: \"\", type: \"magical\", tier: \"x2\", isTT: false },\n\n  // --- X3 TIER ---\n  \"Shop_X3_Charms\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms\", promoName: \"X3 Charms\", htmlSuf: \"\", type: \"charms\", tier: \"x3\", isTT: false },\n  \"Shop_X3_Magicals\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Magicals\", promoName: \"Magical Day\", htmlSuf: \"\", type: \"magical\", tier: \"x3\", isTT: false },\n  \"Shop_X3_Charms_X2_Tokens\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + X2 Tokens\", promoName: \"X2 Tokens\", htmlSuf: \" + X2 Tokens\", type: \"charms\", tier: \"x3\", isTT: false },\n  \"Shop_X3_Charms_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + X2 Tickets + X2 Tokens + X2 HPs\", promoName: \"X2 Everything\", htmlSuf: \" + X2 Tickets + X2 HPs + X2 Tokens\", type: \"charms\", tier: \"x3\", isTT: false },\n  \"Shop_X3_Charms_X2_Tickets\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + X2 Tickets\", promoName: \"X2 Tickets\", htmlSuf: \" + X2 Tickets\", type: \"charms\", tier: \"x3\", isTT: false },\n  \"Shop_X3_Charms_More_Tickets\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + More Tickets\", promoName: \"More Tickets\", htmlSuf: \" + More Tickets\", type: \"charms\", tier: \"x3\", isTT: false },\n  \"Shop_X3_Charms_More_Tickets_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + More Tickets + X2 HP + X2 Tokens\", promoName: \"More Everything\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens\", type: \"charms\", tier: \"x3\", isTT: false },\n\n  // --- NEW TT X1 ---\n  \"TT_Shop_X1_Charms\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + TT\", promoName: \"Charms\", htmlSuf: \" + TT\", type: \"charms\", tier: \"x1\", isTT: true },\n  \"TT_Shop_X1_Charms_X2_Tokens\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + X2 Tokens + TT\", promoName: \"X2 Tokens\", htmlSuf: \" + X2 Tokens + TT\", type: \"charms\", tier: \"x1\", isTT: true },\n  \"TT_Shop_X1_Charms_X2_Tickets\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + X2 Tickets + TT\", promoName: \"X2 Tickets\", htmlSuf: \" + X2 Tickets + TT\", type: \"charms\", tier: \"x1\", isTT: true },\n  \"TT_Shop_X1_Charms_More_Tickets\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + More Tickets + TT\", promoName: \"More Tickets\", htmlSuf: \" + More Tickets + TT\", type: \"charms\", tier: \"x1\", isTT: true },\n  \"TT_Shop_X1_Charms_More_Tickets_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + More Tickets + X2 HP + X2 Tokens + TT\", promoName: \"More Everything\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens + TT\", type: \"charms\", tier: \"x1\", isTT: true },\n  \"TT_Shop_X1_Charms_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Charms + X2 Tickets + X2 Tokens + X2 HPs + TT\", promoName: \"X2 Everything\", htmlSuf: \" + X2 Tickets + X2 HPs + X2 Tokens + TT\", type: \"charms\", tier: \"x1\", isTT: true },\n  \"TT_Shop_X1_Magicals\": { parentTitle: \"Shop: 100% Chips + X1_X2_X3 Magicals + TT\", promoName: \"Magical Day\", htmlSuf: \" + TT\", type: \"magical\", tier: \"x1\", isTT: true },\n  \n  // --- NEW TT X2 ---\n  \"TT_Shop_X2_Magicals\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Magicals + TT\", promoName: \"Magical Day\", htmlSuf: \" + TT\", type: \"magical\", tier: \"x2\", isTT: true },\n  \"TT_Shop_X2_Charms\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + TT\", promoName: \"More Charms\", htmlSuf: \" + TT\", type: \"charms\", tier: \"x2\", isTT: true },\n  \"TT_Shop_X2_Charms_X2_Tokens\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + X2 Tokens + TT\", promoName: \"X2 Tokens\", htmlSuf: \" + X2 Tokens + TT\", type: \"charms\", tier: \"x2\", isTT: true },\n  \"TT_Shop_X2_Charms_X2_Tickets\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + X2 Tickets + TT\", promoName: \"X2 Tickets\", htmlSuf: \" + X2 Tickets + TT\", type: \"charms\", tier: \"x2\", isTT: true },\n  \"TT_Shop_X2_Charms_More_Tickets\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + More Tickets + TT\", promoName: \"More Tickets\", htmlSuf: \" + More Tickets + TT\", type: \"charms\", tier: \"x2\", isTT: true },\n  \"TT_Shop_X2_Charms_More_Tickets_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + More Tickets + X2 HP + X2 Tokens + TT\", promoName: \"More Everything\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens + TT\", type: \"charms\", tier: \"x2\", isTT: true },\n  \"TT_Shop_X2_Charms_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X2_X3_X4 Charms + X2 Tickets + X2 Tokens + X2 HPs + TT\", promoName: \"X2 Everything\", htmlSuf: \" + X2 Tickets + X2 HPs + X2 Tokens + TT\", type: \"charms\", tier: \"x2\", isTT: true },\n\n  // --- NEW TT X3 ---\n  \"TT_Shop_X3_Charms\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + TT\", promoName: \"X3 Charms\", htmlSuf: \" + TT\", type: \"charms\", tier: \"x3\", isTT: true },\n  \"TT_Shop_X3_Magicals\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Magicals + TT\", promoName: \"Magical Day\", htmlSuf: \" + TT\", type: \"magical\", tier: \"x3\", isTT: true },\n  \"TT_Shop_X3_Charms_X2_Tokens\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + X2 Tokens + TT\", promoName: \"X2 Tokens\", htmlSuf: \" + X2 Tokens + TT\", type: \"charms\", tier: \"x3\", isTT: true },\n  \"TT_Shop_X3_Charms_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + X2 Tickets + X2 Tokens + X2 HPs + TT\", promoName: \"X2 Everything\", htmlSuf: \" + X2 Tickets + X2 HPs + X2 Tokens + TT\", type: \"charms\", tier: \"x3\", isTT: true },\n  \"TT_Shop_X3_Charms_X2_Tickets\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + X2 Tickets + TT\", promoName: \"X2 Tickets\", htmlSuf: \" + X2 Tickets + TT\", type: \"charms\", tier: \"x3\", isTT: true },\n  \"TT_Shop_X3_Charms_More_Tickets\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + More Tickets + TT\", promoName: \"More Tickets\", htmlSuf: \" + More Tickets + TT\", type: \"charms\", tier: \"x3\", isTT: true },\n  \"TT_Shop_X3_Charms_More_Tickets_X2_Everything\": { parentTitle: \"Shop: 100% Chips + X3_X4_X5 Charms + More Tickets + X2 HP + X2 Tokens + TT\", promoName: \"More Everything\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens + TT\", type: \"charms\", tier: \"x3\", isTT: true }\n};\n\nreturn dateInfos.flatMap((dateItem, index) => {\n  const dueOn = dateItem.json.runDateISO;\n  const prefix = dateItem.json.runDatePrefix;\n  const tasksFound = searchResults[index].json.data || [];\n\n  const allTagNames = tasksFound.flatMap(t => (t.tags || []).map(tag => tag.name));\n  const matchedTags = Object.keys(tagMap).filter(t => allTagNames.includes(t));\n\n  if (matchedTags.length === 0) return [];\n\n  return matchedTags.map(tagName => {\n    const conf = tagMap[tagName];\n    let html = \"\";\n    let packsDesc = \"\";\n    let tileShop = \"\";\n    \n    let pWord = conf.type === \"magical\" ? \"Magical\" : \"charm\";\n    let pWordPlural = conf.type === \"magical\" ? \"Magicals\" : \"charms\";\n\n    if (conf.tier === \"x1\") {\n      packsDesc = `<ul><li>Phase 1 and 2 - 1 ${pWord}</li><li>Phase 3, 4 and 5 - 2 ${pWordPlural}</li><li>Phase 6 - 3 ${pWordPlural}</li><li>VIP webshop gets +1 pack to the description above</li>`;\n      if (conf.type === \"magical\") {\n        packsDesc += `<li>$2,500 PP (only in the D2C) - missing 5 pack + Magicals 3 RS</li>`;\n      }\n      packsDesc += `</ul>`;\n      tileShop = `<h2>Charms Tile:</h2><ul><li>Phases 1-2: X1 Magical</li><li>Phases 3-5: X2 Magical</li><li>Phase 6: X2 Magical, X2 Regular</li></ul>`;\n    } else if (conf.tier === \"x2\") {\n      packsDesc = `<ul><li>Phase 1 and 2 - 2 ${pWordPlural}</li><li>Phase 3, 4 and 5 - 3 ${pWordPlural}</li><li>Phase 6 - 4 ${pWordPlural}</li><li>VIP webshop gets +1 pack to the description above</li></ul>`;\n      tileShop = `<h2>Charms Tile:</h2><ul><li>Phases 1-2: X1 Magical</li><li>Phases 3-5: X2 Magical</li><li>Phase 6: X2 Magical, X2 Regular</li></ul>`;\n    } else if (conf.tier === \"x3\") { \n      packsDesc = `<ul><li>Phase 1 and 2 - 3 ${pWordPlural}</li><li>Phase 3, 4 and 5 - 4 ${pWordPlural}</li><li>Phase 6 - 5 ${pWordPlural}</li><li>VIP webshop gets +1 pack to the description above</li></ul>`;\n      tileShop = `<h2>Charms Tile:</h2><ul><li>Phases 1-2: X1 Magical</li><li>Phases 3-5: X2 Magical</li><li>Phase 6: X2 Magical, X2 Regular</li></ul>`;\n    }\n\n    html = `<body><h2>General Info</h2><ul><li>Users that completed their album and are in iteration 2/3/4 will have the same experience like iteration 1 according their phases.</li></ul><hr/><h2>Economy</h2><strong>Inapp</strong><ul><li><strong>PU:</strong> 100% Chips + packs (see &quot;Description of packs&quot; below)${conf.htmlSuf}</li><li><strong>NPU:</strong> 300% Chips + packs (see &quot;Description of packs&quot; below)${conf.htmlSuf}</li></ul><strong>Non VIP</strong><ul><li><strong>Dotcom/HPay PU:</strong> 110% Chips + packs (see below)${conf.htmlSuf}</li><li><strong>Dotcom/HPay NPU:</strong> 350% more chips + packs (see below)${conf.htmlSuf}</li></ul><strong>VIP</strong><ul><li><strong>Dotcom/HPay PU:</strong> 120% Chips + packs (see below)${conf.htmlSuf}</li><li><strong>Dotcom/HPay NPU:</strong> 350% more chips + packs (see below)${conf.htmlSuf}</li></ul><hr/><h2>Description of packs</h2>${packsDesc}<hr/>${tileShop}<hr/><h2>Art/Copy</h2>No need<hr/><h2>OPS</h2></body>`;\n\n    return {\n      json: {\n        parentName: prefix ? `${prefix} - ${conf.parentTitle}` : conf.parentTitle,\n        parentHtml: html,\n        dueOn: dueOn,\n        _passThrough: {\n          baseName: conf.parentTitle,\n          promoName: conf.promoName,\n          runDatePrefix: prefix,\n          parentDueOn: dueOn\n        }\n      }\n    };\n  });\n});", "buildCode": "// NOTE: implements the Thursday rule for Roy (Fri/Sat -> Thu, Sun stays as-is)\nfunction economyDueDateFromParent(parentDueIso) {\n  if (!parentDueIso || typeof parentDueIso !== \"string\") return null;\n  const [y, m, d] = parentDueIso.split(\"-\").map(x => parseInt(x, 10));\n  const dt = new Date(Date.UTC(y, m - 1, d));\n  dt.setUTCDate(dt.getUTCDate() - 3);\n  const wd = dt.getUTCDay();\n  if (wd === 5) dt.setUTCDate(dt.getUTCDate() - 1);\n  if (wd === 6) dt.setUTCDate(dt.getUTCDate() - 2);\n  return dt.toISOString().split(\"T\")[0];\n}\n\nconst parentInputs = $items(\"Process Shop Tags & Build Parents\");\n\nconst promoNotes = `** Promo - don't erase it, let's keep it in the description so we will know what are the option **\\n\\nSALE\\nBOX SALE\\nX2 BOX SALE\\nX3 BOX SALE\\nX4 BOX SALE\\nHUUUGE SALE\\nCHARMS SALE\\nX2 CHARMS SALE\\nX3 CHARMS SALE\\nX4 CHARMS SALE\\nX5 CHARMS SALE\\nX6 CHARMS SALE\\nX7 CHARMS SALE\\nMULTIPACK SALE\\nUSA SALE\\nHAPPY HOUR\\nBLACK FRIDAY SALE\\nCYBER SALE\\nEXTRA TICKETS\\nCHRISTMAS SALE\\nNEW YEAR'S SALE\\nXL CHARMS SALE\\nXXL CHARMS SALE\\nMAGICAL SALE\\nSPOOKY SALE\\nFINAL SALE\\nX2 TOKENS SALE\\nX3 TOKENS SALE\\nX4 TOKENS SALE\\nX5 TOKENS SALE\\nX6 TOKENS SALE\\nX3 TOKENS\\nX5 CHARMS\\nX3 CHARMS\\nAUTUMN SALE\\nBLOWOUT SALE\\nEND OF YEAR SALE\\nEXTRA HOT SALE\\nGIRL POWER SALE\\nHOT SALE\\nLUXURIOUS DAYS\\nLUXURIOUS SALE\\nPARTY SALE\\nPARTY TIME\\nSPRING SALE\\nSPRING TIME\\nST. PATRICK'S SALE\\nSUMMER SALE\\nWINTER SALE\\nXMAS IN JULY SALE\\nCHARMS\\nX2 CHARMS\\nX4 CHARMS\\nX6 CHARMS\\nX7 CHARMS\\nX2 TOKENS\\nX4 TOKENS\\nX5 TOKENS\\nX6 TOKENS\\nCHARMING DAY\\nLOTTERY DAY\\nTOKEN DAY\\nELECTRIC DEAL\\nCHARMS DEAL\\nMORE CHARMS\\nEXTRA CHARMS\\nMORE TOKENS\\nEXTRA TOKENS\\nMORE TICKETS\\nAMAZING DEAL\\nMORE CHIPS\\nEXTRA CHIPS\\nCHIPS DEAL\\nCHRISTMAS DEAL\\nSCARY DEAL\\nSPOOKY DEAL\\nLOVELY DEAL\\nXO DEAL\\nXD DEAL\\nSCARY SALE\\nVALENTINE'S SALE\\nTHANKSGIVING SALE\\nCYBER MONDAY SALE\\nMAGICAL DAY\\nJACKPOT DRAW TICKETS\\nEVERYTHING SALE\\nMORE EVERYTHING SALE\\nHUUUGE POINTS SALE\\nX2 HUUUGE POINTS\\nX3 HUUUGE POINTS\\nGOLD TICKETS SALE\\nSILVER TICKETS SALE\\nX2 GOLD TICKETS\\nX2 SILVER TICKETS\\nX3 GOLD TICKETS\\nX3 SILVER TICKETS\\nX2 TICKETS\\nX3 TICKETS\\nX4 TICKETS\\nSINGLES SALE`;\n\nreturn $input.all().flatMap((item, index) => {\n  const parentGid = $items(\"Create Shop Parent Task\")[index].json.gid;\n  const passThrough = parentInputs[index].json._passThrough || {};\n\n  const baseName = passThrough.baseName;\n  const promoName = passThrough.promoName;\n  const prefix = passThrough.runDatePrefix || \"\";\n  const parentDueOn = passThrough.parentDueOn;\n\n  if (!parentGid) return [];\n\n  const econDueOn = economyDueDateFromParent(parentDueOn);\n\n  return [\n    {\n      json: {\n        parentGid,\n        name: prefix ? `${prefix} - ${baseName} - CONFIG` : `${baseName} - CONFIG`,\n        assigneeGid: \"1208211102953242\",\n        dueOn: econDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1201933871229088\", \"1202681320802528\"], isConfig: true }\n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: prefix ? `${prefix} - ${baseName} - OPS` : `${baseName} - OPS`,\n        assigneeGid: null,\n        dueOn: parentDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1202720677378175\"], isConfig: false }\n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: prefix ? `${prefix} - ${baseName} - \"${promoName}\" - OPS` : `${baseName} - \"${promoName}\" - OPS`,\n        assigneeGid: null,\n        dueOn: parentDueOn,\n        notes: promoNotes,\n        _passThrough: { projectGids: [\"1202720677378175\"], isConfig: false }\n      }\n    }\n  ];\n});", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709747"}, "PO": {"label": "PO", "tagId": "1214054942942834,1214054942942835,1214054942942836,1214054942942837,1214054942942838,1214054942942839,1214054942942840,1214066418876589,1214066418996783,1214066418996784,1214066418996785,1214066418996786,1214066418996787,1214066418996788,1214067743852675,1214067743852676,1214067743852677,1214067743852678,1214067743852679,1214067743852680,1214067743852681,1214067743852683,1214067743852684,1214067743852685,1214067743852686,1214067743852687,1214067743852688,1214067743852689,1214101238660110,1214101238660111,1214101238660112,1214101238660113,1214101238660114,1214101238660115,1214101238660116,1214101238660118,1214101238660119,1214101238660120,1214101238660121,1214101238660122,1214101238660123,1214101238660124", "parentProjectId": "1202103624709695", "dateField": "due_on", "configProjectId": "1201933871229088", "configSectionId": "1201933871229089", "processCode": "const searchResults = $items(\"Search PO Tasks\");\nconst dateInfos = $items(\"Expand Date Range\");\n\nconst tagMap = {\n  // X1 TIER\n  \"PO_X1_Charms\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms | WEB SHOP: | GR:\", htmlSuf: \"\", type: \"charms\", tier: \"x1\" },\n  \"PO_X1_Magicals\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Magicals | WEB SHOP: | GR:\", htmlSuf: \"\", type: \"magical\", tier: \"x1\" },\n  \"PO_X1_Charms_X2_Tokens\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + X2 Tokens | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tokens\", type: \"charms\", tier: \"x1\" },\n  \"PO_X1_Charms_X2_Everything\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + X2 Tickets + X2 Tokens + X2 HPs | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets + X2 Tokens + X2 HPs\", type: \"charms\", tier: \"x1\" },\n  \"PO_X1_Charms_X2_Tickets\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + X2 Tickets | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets\", type: \"charms\", tier: \"x1\" },\n  \"PO_X1_Charms_More_Tickets\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + More Tickets | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets\", type: \"charms\", tier: \"x1\" },\n  \"PO_X1_Charms_More_Tickets_X2_Everything\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + More Tickets + X2 HP + X2 Tokens | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens\", type: \"charms\", tier: \"x1\" },\n  \n  // X2 TIER\n  \"PO_X2_Charms\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms | WEB SHOP: | GR:\", htmlSuf: \"\", type: \"charms\", tier: \"x2\" },\n  \"PO_X2_Magicals\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Magicals | WEB SHOP: | GR:\", htmlSuf: \"\", type: \"magical\", tier: \"x2\" },\n  \"PO_X2_Charms_X2_Tokens\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + X2 Tokens | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tokens\", type: \"charms\", tier: \"x2\" },\n  \"PO_X2_Charms_X2_Everything\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + X2 Tickets + X2 Tokens + X2 HPs | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets + X2 Tokens + X2 HPs\", type: \"charms\", tier: \"x2\" },\n  \"PO_X2_Charms_X2_Tickets\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + X2 Tickets | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets\", type: \"charms\", tier: \"x2\" },\n  \"PO_X2_Charms_More_Tickets\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + More Tickets | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets\", type: \"charms\", tier: \"x2\" },\n  \"PO_X2_Charms_More_Tickets_X2_Everything\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + More Tickets + X2 HP + X2 Tokens | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens\", type: \"charms\", tier: \"x2\" },\n\n  // X3 TIER\n  \"PO_X3_Charms\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms | WEB SHOP: | GR:\", htmlSuf: \"\", type: \"charms\", tier: \"x3\" },\n  \"PO_X3_Magicals\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Magicals | WEB SHOP: | GR:\", htmlSuf: \"\", type: \"magical\", tier: \"x3\" },\n  \"PO_X3_Charms_X2_Tokens\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + X2 Tokens | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tokens\", type: \"charms\", tier: \"x3\" },\n  \"PO_X3_Charms_X2_Everything\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + X2 Tickets + X2 Tokens + X2 HPs | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets + X2 Tokens + X2 HPs\", type: \"charms\", tier: \"x3\" },\n  \"PO_X3_Charms_X2_Tickets\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + X2 Tickets | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets\", type: \"charms\", tier: \"x3\" },\n  \"PO_X3_Charms_More_Tickets\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + More Tickets | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets\", type: \"charms\", tier: \"x3\" },\n  \"PO_X3_Charms_More_Tickets_X2_Everything\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + More Tickets + X2 HP + X2 Tokens | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens\", type: \"charms\", tier: \"x3\" },\n\n  // TT X1 TIER\n  \"TT_PO_X1_Charms\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + TT | WEB SHOP: | GR:\", htmlSuf: \" + TT\", type: \"charms\", tier: \"x1\" },\n  \"TT_PO_X1_Magicals\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Magicals + TT | WEB SHOP: | GR:\", htmlSuf: \" + TT\", type: \"magical\", tier: \"x1\" },\n  \"TT_PO_X1_Charms_X2_Tokens\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + X2 Tokens + TT | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tokens + TT\", type: \"charms\", tier: \"x1\" },\n  \"TT_PO_X1_Charms_X2_Tickets\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + X2 Tickets + TT | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets + TT\", type: \"charms\", tier: \"x1\" },\n  \"TT_PO_X1_Charms_X2_Everything\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + X2 Tickets + X2 Tokens + X2 HPs + TT | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets + X2 Tokens + X2 HPs + TT\", type: \"charms\", tier: \"x1\" },\n  \"TT_PO_X1_Charms_More_Tickets\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + More Tickets + TT | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets + TT\", type: \"charms\", tier: \"x1\" },\n  \"TT_PO_X1_Charms_More_Tickets_X2_Everything\": { parentTitle: \"PO: 100% chips + X1_X2_X3 Charms + More Tickets + X2 HP + X2 Tokens + TT | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens + TT\", type: \"charms\", tier: \"x1\" },\n\n  // TT X2 TIER\n  \"TT_PO_X2_Charms\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + TT | WEB SHOP: | GR:\", htmlSuf: \" + TT\", type: \"charms\", tier: \"x2\" },\n  \"TT_PO_X2_Magicals\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Magicals + TT | WEB SHOP: | GR:\", htmlSuf: \" + TT\", type: \"magical\", tier: \"x2\" },\n  \"TT_PO_X2_Charms_X2_Tokens\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + X2 Tokens + TT | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tokens + TT\", type: \"charms\", tier: \"x2\" },\n  \"TT_PO_X2_Charms_X2_Tickets\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + X2 Tickets + TT | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets + TT\", type: \"charms\", tier: \"x2\" },\n  \"TT_PO_X2_Charms_X2_Everything\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + X2 Tickets + X2 Tokens + X2 HPs + TT | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets + X2 Tokens + X2 HPs + TT\", type: \"charms\", tier: \"x2\" },\n  \"TT_PO_X2_Charms_More_Tickets\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + More Tickets + TT | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets + TT\", type: \"charms\", tier: \"x2\" },\n  \"TT_PO_X2_Charms_More_Tickets_X2_Everything\": { parentTitle: \"PO: 100% chips + X2_X3_X4 Charms + More Tickets + X2 HP + X2 Tokens + TT | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens + TT\", type: \"charms\", tier: \"x2\" },\n\n  // TT X3 TIER\n  \"TT_PO_X3_Charms\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + TT | WEB SHOP: | GR:\", htmlSuf: \" + TT\", type: \"charms\", tier: \"x3\" },\n  \"TT_PO_X3_Magicals\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Magicals + TT | WEB SHOP: | GR:\", htmlSuf: \" + TT\", type: \"magical\", tier: \"x3\" },\n  \"TT_PO_X3_Charms_X2_Tokens\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + X2 Tokens + TT | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tokens + TT\", type: \"charms\", tier: \"x3\" },\n  \"TT_PO_X3_Charms_X2_Tickets\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + X2 Tickets + TT | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets + TT\", type: \"charms\", tier: \"x3\" },\n  \"TT_PO_X3_Charms_X2_Everything\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + X2 Tickets + X2 Tokens + X2 HPs + TT | WEB SHOP: | GR:\", htmlSuf: \" + X2 Tickets + X2 Tokens + X2 HPs + TT\", type: \"charms\", tier: \"x3\" },\n  \"TT_PO_X3_Charms_More_Tickets\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + More Tickets + TT | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets + TT\", type: \"charms\", tier: \"x3\" },\n  \"TT_PO_X3_Charms_More_Tickets_X2_Everything\": { parentTitle: \"PO: 100% chips + X3_X4_X5 Charms + More Tickets + X2 HP + X2 Tokens + TT | WEB SHOP: | GR:\", htmlSuf: \" + More Tickets + X2 HP + X2 Tokens + TT\", type: \"charms\", tier: \"x3\" }\n};\n\nreturn dateInfos.flatMap((dateItem, index) => {\n  const dueOn = dateItem.json.runDateISO;\n  const prefix = dateItem.json.runDatePrefix;\n  const tasksFound = searchResults[index].json.data || [];\n\n  const allTagNames = tasksFound.flatMap(t => (t.tags || []).map(tag => tag.name));\n  const matchedTags = Object.keys(tagMap).filter(t => allTagNames.includes(t));\n\n  if (matchedTags.length === 0) return [];\n\n  return matchedTags.map(tagName => {\n    const conf = tagMap[tagName];\n    let html = \"\";\n    let packsDesc = \"\";\n    \n    let pWord = conf.type === \"magical\" ? \"MAGICAL\" : \"CHARM\";\n\n    if (conf.tier === \"x1\") {\n      packsDesc = `<strong>Description of packs - FOR 1 ${pWord}</strong>\\n` +\n      `Phase 1+2 = X1\\n` +\n      `less than 349.99$ = X1\\n` +\n      `$349.99 - $998.99 = X1 Magical (2 reshuffles)\\n` +\n      `$999 = X1 Magical (3 reshuffles)\\n\\n` +\n      `Phase 3+4+5 = X2\\n` +\n      `less than 349.99$ = X2\\n` +\n      `$349.99 - $998.99 = X2 Magical (2 reshuffles)\\n` +\n      `$999 = X2 Magical (3 reshuffles)\\n\\n` +\n      `Phase 6 = X3\\n` +\n      `less than 349.99$ = X3\\n` +\n      `$349.99 - $998.99 = X3 Magical (2 reshuffles)\\n` +\n      `$999 = X3 Magical (3 reshuffles)\\n\\n` +\n      `WEB SHOP***************************************************\\n\\n` +\n      `GR*********************************************************`;\n    } else if (conf.tier === \"x2\") {\n      if (conf.type === \"magical\") {\n        packsDesc = `<strong>Description of packs - FOR X2 MAGICALS</strong>\\n` +\n        `Phase 1+2 = X2 Magical\\n` +\n        `&lt;349.99$ = X2 Magical\\n` +\n        `$349.99 - $998.99  = X2 Magical (2 reshuffles)\\n` +\n        `$999 = X2 Magical (3 reshuffles)\\n\\n` +\n        `Phase 3+4+5 = X3 Magical\\n` +\n        `&lt;349.99$ = X3 Magical\\n` +\n        `$349.99 - $998.99 = X3 Magical (2 reshuffles)\\n` +\n        `$999 = X3 Magical (3 reshuffles)\\n\\n` +\n        `Phase 6 = X4 Magical\\n` +\n        `&lt;349.99$ = X4 Magical\\n` +\n        `$349.99 - $998.99 = X4 Magical (2 reshuffles)\\n` +\n        `$999 = X4 Magical (3 reshuffles)\\n\\n` +\n        `WEB SHOP***************************************************\\n\\n` +\n        `GR*********************************************************`;\n      } else {\n        packsDesc = `<strong>Description of packs - FOR X2 CHARMS</strong>\\n` +\n        `Phase 1+2 = X2\\n` +\n        `&lt;349.99$ = X2 Regular\\n` +\n        `$349.99 - $998.99 = X2 Magical\\n` +\n        `$999 = X2 Magical (2 reshuffles)\\n\\n` +\n        `Phase 3+4+5 = X3\\n` +\n        `&lt;349.99$ = X3 Regular\\n` +\n        `$349.99 - $998.99 = X3 Magical\\n` +\n        `$999 = X3 Magical (2 reshuffles)\\n\\n` +\n        `Phase 6 = X4\\n` +\n        `&lt;349.99$ = X4 Regular\\n` +\n        `$349.99 - $998.99 = X4 Magical\\n` +\n        `$999 = X4 Magical (2 reshuffles)\\n\\n` +\n        `WEB SHOP***************************************************\\n\\n` +\n        `GR*********************************************************`;\n      }\n    } else if (conf.tier === \"x3\") {\n      if (conf.type === \"magical\") {\n        packsDesc = `<strong>Description of packs - FOR X3_X4_X5 MAGICALS</strong>\\n` +\n        `Phase 1+2 = X3 Magical\\n` +\n        `&lt;349.99$ = X3 Magical\\n` +\n        `$349.99 - $998.99  = X3 Magical (2 reshuffles)\\n` +\n        `$999 = X3 Magical (3 reshuffles)\\n\\n` +\n        `Phase 3+4+5 = X4 Magical\\n` +\n        `&lt;349.99$ = X4 Magical\\n` +\n        `$349.99 - $998.99 = X4 Magical (2 reshuffles)\\n` +\n        `$999 = X4 Magical (3 reshuffles)\\n\\n` +\n        `Phase 6 = X5 Magical\\n` +\n        `&lt;349.99$ = X5 Magical\\n` +\n        `$349.99 - $998.99 = X5 Magical (2 reshuffles)\\n` +\n        `$999 = X5 Magical (3 reshuffles)\\n\\n` +\n        `WEB SHOP***************************************************\\n\\n` +\n        `GR*********************************************************`;\n      } else {\n        packsDesc = `<strong>Description of packs - FOR X3_X4_X5 CHARMS</strong>\\n` +\n        `Phase 1+2 = X3\\n` +\n        `&lt;349.99$ = X3 Regular\\n` +\n        `$349.99 - $998.99 = X3 Magical\\n` +\n        `$999 = X3 Magical (2 reshuffles)\\n\\n` +\n        `Phase 3+4+5 = X4\\n` +\n        `&lt;349.99$ = X4 Regular\\n` +\n        `$349.99 - $998.99 = X4 Magical\\n` +\n        `$999 = X4 Magical (2 reshuffles)\\n\\n` +\n        `Phase 6 = X5\\n` +\n        `&lt;349.99$ = X5 Regular\\n` +\n        `$349.99 - $998.99 = X5 Magical\\n` +\n        `$999 = X5 Magical (2 reshuffles)\\n\\n` +\n        `WEB SHOP***************************************************\\n\\n` +\n        `GR*********************************************************`;\n      }\n    }\n    \n    html = `<body><strong>General Info:</strong>\\n` +\n    `- Users that completed their album and are in iteration 2/3/4 will have same experience like iteration 1 according their phases.<hr/>` +\n    `<strong>Economy:</strong>\\n` +\n    `<strong>App:</strong>\\n` +\n    `PU: 100% Chips + packs per packs description below${conf.htmlSuf}\\n` +\n    `NPU: 300% Chips + packs per packs description below${conf.htmlSuf}\\n\\n` +\n    `<strong>Dotcom + NON-VIP Webshop:</strong>\\n` +\n    `PU: 110% / 120% more chips + packs per packs description below${conf.htmlSuf}\\n` +\n    `NPU: 350% more chips + packs per packs description below${conf.htmlSuf}\\n\\n` +\n    `${packsDesc}<hr/>` +\n    `<strong>Art/Copy:</strong>\\n` +\n    `<strong>Re-run:</strong>` +\n    `<ul><li>See general</li><li>Theme</li></ul>` +\n    `<strong>Leading theme:</strong>` +\n    `<ul><li>Current Charms Phase Style theme please</li></ul>` +\n    `WEB SHOP + GR***************************************************<hr/>` +\n    `<strong>Social Media:</strong><hr/>` +\n    `<strong>BA:</strong><hr/>` +\n    `<strong>OPS:</strong>\\n` +\n    `WEB SHOP + GR***************************************************` +\n    `</body>`;\n\n    return {\n      json: {\n        parentName: prefix ? `${prefix} - ${conf.parentTitle}` : conf.parentTitle,\n        parentHtml: html,\n        dueOn: dueOn,\n        _passThrough: {\n          baseName: conf.parentTitle,\n          promoName: conf.promoName,\n          runDatePrefix: prefix,\n          parentDueOn: dueOn\n        }\n      }\n    };\n  });\n});", "buildCode": "// NOTE: implements the Thursday rule for Roy (Fri/Sat -> Thu, Sun stays as-is)\nfunction economyDueDateFromParent(parentDueIso) {\n  if (!parentDueIso || typeof parentDueIso !== \"string\") return null;\n  const [y, m, d] = parentDueIso.split(\"-\").map(x => parseInt(x, 10));\n  const dt = new Date(Date.UTC(y, m - 1, d));\n  dt.setUTCDate(dt.getUTCDate() - 3);\n  const wd = dt.getUTCDay();\n  if (wd === 5) dt.setUTCDate(dt.getUTCDate() - 1);\n  if (wd === 6) dt.setUTCDate(dt.getUTCDate() - 2);\n  return dt.toISOString().split(\"T\")[0];\n}\n\nfunction copyDueDateFromParent(parentDueIso) {\n  if (!parentDueIso || typeof parentDueIso !== \"string\") return null;\n  const [y, m, d] = parentDueIso.split(\"-\").map(x => parseInt(x, 10));\n  const dt = new Date(Date.UTC(y, m - 1, d));\n  dt.setUTCDate(dt.getUTCDate() - 3);\n  const wd = dt.getUTCDay();\n  if (wd === 0) dt.setUTCDate(dt.getUTCDate() - 2);\n  if (wd === 6) dt.setUTCDate(dt.getUTCDate() - 1);\n  return dt.toISOString().split(\"T\")[0];\n}\n\nconst parentInputs = $items(\"Process PO Tags & Build Parents\");\n\nconst artNotesText = \"\ud83c\udfa8 Design Tips:\\n\u2022 \\n\\n---------------------------------------------------\\nBody:\\n\\nBadge 1: <Multiplier>\\nBadge 2:\\nBadge 3:\\n\\nCTA:\";\n\nreturn $input.all().flatMap((item, index) => {\n  const parentGid = $items(\"Create PO Parent Task\")[index].json.gid;\n  const passThrough = parentInputs[index].json._passThrough || {};\n\n  const baseName = passThrough.baseName;\n  const prefix = passThrough.runDatePrefix || \"\";\n  const parentDueOn = passThrough.parentDueOn;\n\n  if (!parentGid) return [];\n\n  const econDueOn = economyDueDateFromParent(parentDueOn);\n  const copyDueOn = copyDueDateFromParent(parentDueOn);\n\n  const artBaseName = baseName.replace(\" | WEB SHOP: | GR:\", \"\").trim();\n\n  return [\n    {\n      json: {\n        parentGid,\n        name: `WS + GR***************************************************`,\n        assigneeGid: null,\n        dueOn: null,\n        notes: \"\",\n        _passThrough: { projectGids: [], isConfig: false }\n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: prefix ? `${prefix} - ${baseName} - OPS` : `${baseName} - OPS`,\n        assigneeGid: null,\n        dueOn: parentDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1202720677378175\"], isConfig: false }\n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: prefix ? `${prefix} - ${artBaseName} - ART` : `${artBaseName} - ART`,\n        assigneeGid: null,\n        dueOn: parentDueOn,\n        notes: artNotesText,\n        _passThrough: { projectGids: [\"1202103624709698\"], isConfig: false } \n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: prefix ? `${prefix} - ${baseName} - COPY` : `${baseName} - COPY`,\n        assigneeGid: \"1203098851994102\",\n        dueOn: copyDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1202805118467140\"], isConfig: false } \n      }\n    },\n    {\n      json: {\n        parentGid,\n        name: prefix ? `${prefix} - ${baseName} - CONFIG` : `${baseName} - CONFIG`,\n        assigneeGid: \"1208211102953242\",\n        dueOn: econDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1201933871229088\", \"1202681320802528\"], isConfig: true }\n      }\n    }\n  ];\n});", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709747"}}}
+</script>
+
+<script>
+const CLIENT_ID     = "1214940964091051";
+const CLIENT_SECRET = "20d6386dcb65b65a8043630f2121f600";
+const REDIRECT_URI  = window.location.href.split("?")[0].split("#")[0];
+const ASANA_AUTH    = "https://app.asana.com/-/oauth_authorize";
+const ASANA_TOKEN   = "https://app.asana.com/-/oauth_token";
+const ASANA_API     = "https://app.asana.com/api/1.0";
+
+let accessToken = localStorage.getItem("asana_token") || null;
+
+const SPEC = JSON.parse(document.getElementById("pipeline-spec").textContent);
+const WORKSPACE_GID = SPEC.workspaceGid;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+function loginWithAsana() {
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem("oauth_state", state);
+  window.location.href = `${ASANA_AUTH}?${new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code", state })}`;
+}
+async function exchangeCode(code) {
+  const res = await fetch(ASANA_TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "authorization_code", client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, code }) });
+  const data = await res.json();
+  if (data.access_token) { accessToken = data.access_token; localStorage.setItem("asana_token", accessToken); return true; }
+  return false;
+}
+function logout() {
+  localStorage.removeItem("asana_token");
+  accessToken = null;
+  document.getElementById("appArea").style.display = "none";
+  document.getElementById("loginArea").style.display = "block";
+}
+
+// ── ASANA API HELPERS ────────────────────────────────────────────────────
+async function asanaGet(path) {
+  const res = await fetch(`${ASANA_API}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPost(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPut(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── N8N CODE-NODE SHIM ───────────────────────────────────────────────────
+// Runs the workflow's original Code-node bodies verbatim, so business logic
+// (HTML templates, subtask lists, date math) stays byte-identical to n8n.
+function runItemCode(code, jsonObj) {
+  return new Function("$json", code)(jsonObj);
+}
+function runBatchCode(code, itemsMap) {
+  const $items = (name) => itemsMap[name] || [];
+  const $input = { all: () => itemsMap.__input || [] };
+  return new Function("$items", "$input", code)($items, $input);
+}
+
+// ── DATE LIST ────────────────────────────────────────────────────────────
+function buildDatesList(rangeStart, rangeEnd, specificDates) {
+  const items = runItemCode(SPEC.buildDatesCode, { rangeStart, rangeEnd, specificDates });
+  return items.map(i => i.json.dueOn);
+}
+
+// ── PIPELINE UI ──────────────────────────────────────────────────────────
+const PIPELINE_LABELS = {
+  Shop: "Shop", PO: "PO",
+};
+const pipelinesEl = document.getElementById("pipelines");
+Object.keys(SPEC.pipelines).forEach((key) => {
+  const div = document.createElement("div");
+  div.className = "pipe-item";
+  div.innerHTML = `<input type="checkbox" id="pipe_${key}" checked><label for="pipe_${key}">${PIPELINE_LABELS[key] || key}</label>`;
+  pipelinesEl.appendChild(div);
+});
+function setAllPipelines(v) {
+  Object.keys(SPEC.pipelines).forEach(key => document.getElementById(`pipe_${key}`).checked = v);
+}
+
+// ── LOG PANEL ────────────────────────────────────────────────────────────
+const logEl = document.getElementById("log");
+function log(text, cls) {
+  logEl.style.display = "block";
+  const div = document.createElement("div");
+  div.className = "line" + (cls ? " " + cls : "");
+  div.textContent = text;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ── PIPELINE RUNNER ──────────────────────────────────────────────────────
+async function runPipeline(key, dates) {
+  const p = SPEC.pipelines[key];
+  const label = p.label;
+  log(`▶ ${label}: searching ${dates.length} date(s)…`, "muted");
+
+  const searchResultsCtx = [];
+  for (const d of dates) {
+    const q = new URLSearchParams({
+      "tags.any": p.tagId,
+      [`${p.dateField}.before`]: d,
+      [`${p.dateField}.after`]: d,
+      "opt_fields": "name,tags.name,start_on,due_on",
+    });
+    const res = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
+    searchResultsCtx.push({ json: res });
+    await sleep(120);
+  }
+  const dateInfosCtx = dates.map(d => ({ json: { runDateISO: d } }));
+
+  const processedItems = runBatchCode(p.processCode, {
+    [`Search ${label} Tasks`]: searchResultsCtx,
+    "Expand Date Range": dateInfosCtx,
+  });
+
+  if (processedItems.length === 0) {
+    log(`  ${label}: no matching planning task found for any selected date — skipped.`, "warn");
+    return;
+  }
+  if (processedItems.length < dates.length) {
+    log(`  ${label}: ${dates.length - processedItems.length} date(s) had no matching planning task and were skipped.`, "warn");
+  }
+
+  const parentGidCtx = [];
+  for (const item of processedItems) {
+    try {
+      const created = await asanaPost("/tasks", {
+        name: item.json.parentName,
+        workspace: WORKSPACE_GID,
+        projects: [p.parentProjectId],
+        due_on: item.json.dueOn,
+      });
+      const gid = created.data.gid;
+      parentGidCtx.push({ json: { gid } });
+      await sleep(120);
+
+      await asanaPut(`/tasks/${gid}`, {
+        custom_fields: { [p.customFieldId]: p.customFieldValue },
+      });
+      await sleep(120);
+
+      await asanaPut(`/tasks/${gid}`, { html_notes: item.json.parentHtml });
+      await sleep(120);
+
+      log(`  ✓ ${label}: created parent "${item.json.parentName}"`, "ok");
+    } catch (e) {
+      parentGidCtx.push({ json: { gid: null } });
+      log(`  ✗ ${label}: failed to create parent "${item.json.parentName}" — ${e.message}`, "err");
+    }
+  }
+
+  const subtaskDefs = runBatchCode(p.buildCode, {
+    [`Process ${label} Tags & Build Parents`]: processedItems,
+    [`Create ${label} Parent Task`]: parentGidCtx,
+    __input: new Array(processedItems.length).fill({ json: {} }),
+  });
+
+  const subtaskResults = [];
+  for (const def of subtaskDefs) {
+    const j = def.json;
+    if (!j.parentGid) { subtaskResults.push(null); continue; }
+    try {
+      const created = await asanaPost(`/tasks/${j.parentGid}/subtasks`, {
+        name: j.name,
+        assignee: j.assigneeGid,
+        due_on: j.dueOn,
+        notes: j.notes,
+      });
+      subtaskResults.push({ gid: created.data.gid });
+      log(`    ✓ subtask "${j.name}"`, "ok");
+    } catch (e) {
+      subtaskResults.push(null);
+      log(`    ✗ subtask "${j.name}" — ${e.message}`, "err");
+    }
+    await sleep(120);
+  }
+
+  const projectRows = subtaskDefs.flatMap((def, idx) => {
+    const res = subtaskResults[idx];
+    if (!res) return [];
+    const pass = def.json._passThrough || {};
+    const projectGids = pass.projectGids || [];
+    const isConfig = pass.isConfig || false;
+    return projectGids.map(pGid => ({ taskGid: res.gid, projectGid: pGid, isConfig }));
+  });
+
+  for (const row of projectRows) {
+    try {
+      if (row.isConfig && row.projectGid === p.configProjectId) {
+        await asanaPost(`/sections/${p.configSectionId}/addTask`, { task: row.taskGid });
+      } else {
+        await asanaPost(`/tasks/${row.taskGid}/addProject`, { project: row.projectGid });
+      }
+      await sleep(120);
+    } catch (e) {
+      log(`    ✗ project/section link failed for a subtask — ${e.message}`, "err");
+    }
+  }
+
+  log(`■ ${label}: done.`, "muted");
+}
+
+async function runAll() {
+  const rangeStart = document.getElementById("rangeStart").value;
+  const rangeEnd = document.getElementById("rangeEnd").value;
+  const specificDates = document.getElementById("specificDates").value.trim();
+
+  const dates = buildDatesList(rangeStart, rangeEnd, specificDates);
+  if (dates.length === 0) {
+    alert("Enter a date range or specific dates first.");
+    return;
+  }
+
+  const selected = Object.keys(SPEC.pipelines).filter(key => document.getElementById(`pipe_${key}`).checked);
+  if (selected.length === 0) {
+    alert("Select at least one pipeline.");
+    return;
+  }
+
+  const labels = selected.map(k => PIPELINE_LABELS[k] || k).join(", ");
+  if (!confirm(`This will create real Asana tasks.\n\nDates: ${dates.join(", ")}\nPipelines: ${labels}\n\nContinue?`)) return;
+
+  const btn = document.getElementById("runBtn");
+  btn.disabled = true;
+  logEl.innerHTML = "";
+  logEl.style.display = "block";
+  log(`Starting run for ${dates.length} date(s) × ${selected.length} pipeline(s)…`, "muted");
+
+  for (const key of selected) {
+    try {
+      await runPipeline(key, dates);
+    } catch (e) {
+      log(`✗ ${PIPELINE_LABELS[key] || key}: ${e.message}`, "err");
+    }
+  }
+
+  log("All done.", "ok");
+  btn.disabled = false;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code"), state = params.get("state"), error = params.get("error");
+  if (code || error) window.history.replaceState({}, document.title, window.location.pathname);
+  if (error) {
+    document.getElementById("oauthError").style.display = "block";
+    document.getElementById("oauthError").textContent = `Asana login error: ${error}`;
+    return;
+  }
+  if (code) {
+    const saved = sessionStorage.getItem("oauth_state");
+    if (state !== saved) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "OAuth state mismatch.";
+      return;
+    }
+    sessionStorage.removeItem("oauth_state");
+    const ok = await exchangeCode(code);
+    if (!ok) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "Failed to exchange login code.";
+      return;
+    }
+  }
+  if (accessToken) {
+    document.getElementById("loginArea").style.display = "none";
+    document.getElementById("appArea").style.display = "block";
+    try {
+      const me = await asanaGet("/users/me?opt_fields=name");
+      document.getElementById("userLabel").textContent = `Signed in as ${me.data.name}`;
+    } catch (e) { /* ignore */ }
+  } else {
+    document.getElementById("loginArea").style.display = "block";
+    document.getElementById("appArea").style.display = "none";
+  }
+}
+init();
+</script>
+</body>
+</html>
