@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asana Community Trigger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0c0e; --surface: #13151a; --surface2: #1c1f27;
+    --border: rgba(255,255,255,0.07); --border-strong: rgba(255,255,255,0.14);
+    --text: #f0f0ee; --muted: #7a7d86;
+    --accent: #9b8cff; --accent-hover: #b0a4ff;
+    --success: #6ae8a0; --success-bg: rgba(106,232,160,0.08);
+    --danger: #e87a6a; --danger-bg: rgba(232,122,106,0.08);
+    --warn: #e8b46a; --warn-bg: rgba(232,180,106,0.08);
+    --glow: rgba(155,140,255,0.08);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f4f0; --surface: #ffffff; --surface2: #efede8;
+      --border: rgba(0,0,0,0.08); --border-strong: rgba(0,0,0,0.16);
+      --text: #1a1917; --muted: #6b6860;
+      --accent: #6a4fd6; --accent-hover: #5a3fc0;
+      --success: #1a7a4a; --success-bg: rgba(26,122,74,0.08);
+      --danger: #b23a2e; --danger-bg: rgba(178,58,46,0.08);
+      --warn: #9b5a00; --warn-bg: rgba(155,90,0,0.08);
+      --glow: rgba(106,79,214,0.06);
+    }
+  }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 20px 80px; position: relative; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 700px; height: 400px; background: radial-gradient(ellipse, var(--glow) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  .wrapper { width: 100%; max-width: 680px; position: relative; z-index: 1; }
+  header { margin-bottom: 40px; text-align: center; }
+  .logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: var(--surface2); border: 1px solid var(--border-strong); border-radius: 12px; margin-bottom: 20px; font-size: 20px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .sub { color: var(--muted); font-size: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+  .card h2 { font-size: 12px; margin: 0 0 16px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-strong);
+    background: var(--surface2); color: var(--text); font-size: 14px; margin-bottom: 14px; font-family: 'DM Mono', monospace;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .pipelines { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 8px; }
+  .pipe-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+  .pipe-item input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+  .pipe-item label { margin: 0; color: var(--text); font-size: 14px; cursor: pointer; }
+  .pipe-actions { display: flex; gap: 10px; margin-bottom: 16px; }
+  .pipe-actions button { background: none; border: 1px solid var(--border-strong); color: var(--muted); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .pipe-actions button:hover { color: var(--text); border-color: var(--accent); }
+  .hint { font-size: 12px; color: var(--muted); margin: -8px 0 14px; line-height: 1.4; }
+  button.primary {
+    width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent);
+    color: #0b0c0e; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .userbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: var(--muted); }
+  .userbar a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .userbar a:hover { text-decoration: underline; }
+  #loginArea { text-align: center; }
+  #loginArea .card { text-align: left; }
+  #loginArea p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  #oauthError { display: none; background: var(--danger-bg); color: var(--danger); border-radius: 8px; padding: 12px 14px; font-size: 13px; margin-bottom: 16px; }
+  #appArea { display: none; }
+  #log {
+    margin-top: 8px; max-height: 320px; overflow-y: auto; background: #08090b; border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; font-family: 'DM Mono', monospace; font-size: 12.5px; line-height: 1.6;
+  }
+  #log .line { white-space: pre-wrap; word-break: break-word; }
+  #log .ok { color: var(--success); }
+  #log .err { color: var(--danger); }
+  #log .warn { color: var(--warn); }
+  #log .muted { color: var(--muted); }
+  footer { margin-top: 32px; text-align: center; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div style="margin-bottom:16px;"><a href="index.html" style="color:var(--muted); font-size:13px; text-decoration:none;">&larr; All tools</a></div>
+  <header>
+    <div class="logo-mark">⚡</div>
+    <h1>Asana Community Trigger</h1>
+    <div class="sub">Runs the "Charms 22 Community" automation directly against the Asana API.</div>
+  </header>
+
+  <div id="oauthError"></div>
+
+  <div id="loginArea">
+    <div class="card">
+      <h2>Connect your Asana account</h2>
+      <p>Sign in with Asana so tasks are created under your own account.</p>
+      <button class="primary" onclick="loginWithAsana()">Login with Asana</button>
+    </div>
+  </div>
+
+  <div id="appArea">
+    <div class="userbar">
+      <span id="userLabel"></span>
+      <a onclick="logout()">Log out</a>
+    </div>
+
+    <div class="card">
+      <h2>Dates</h2>
+      <div class="row">
+        <div>
+          <label for="rangeStart">Range start</label>
+          <input type="date" id="rangeStart">
+        </div>
+        <div>
+          <label for="rangeEnd">Range end</label>
+          <input type="date" id="rangeEnd">
+        </div>
+      </div>
+      <label for="specificDates">Or specific dates (overrides range above)</label>
+      <textarea id="specificDates" placeholder="2026-07-11, 2026-07-15&#10;2026-07-20"></textarea>
+      <div class="hint">One or more YYYY-MM-DD dates, comma or newline separated. Leave blank to use the range instead.</div>
+    </div>
+
+    <div class="card">
+      <h2>Pipelines to run</h2>
+      <div class="pipe-actions">
+        <button type="button" onclick="setAllPipelines(true)">Select all</button>
+        <button type="button" onclick="setAllPipelines(false)">Select none</button>
+      </div>
+      <div class="pipelines" id="pipelines"></div>
+      <div class="hint">Each pipeline looks for an existing planning task tagged for that offer type on the chosen date(s), then builds the parent task + subtasks from it. Dates with no matching planning task are skipped.</div>
+    </div>
+
+    <button class="primary" id="runBtn" onclick="runAll()">Run</button>
+    <div id="log" style="display:none;"></div>
+  </div>
+
+  <footer>Powered by Asana API</footer>
+</div>
+
+<script id="pipeline-spec" type="application/json">
+{"workspaceGid": "54393662698285", "buildDatesCode": "const rangeStart = ($json.rangeStart || \"\").trim();\nconst rangeEnd = ($json.rangeEnd || \"\").trim();\nconst specificRaw = ($json.specificDates || \"\").trim();\n\nfunction parseSpecificDates(s) {\n  return s.split(/[\\n,]+/).map((x) => x.trim()).filter(Boolean).filter((x) => /^\\d{4}-\\d{2}-\\d{2}$/.test(x));\n}\n\nfunction addDaysUTC(iso, days) {\n  const [y, m, d] = iso.split(\"-\").map((n) => parseInt(n, 10));\n  const dt = new Date(Date.UTC(y, m - 1, d));\n  dt.setUTCDate(dt.getUTCDate() + days);\n  const yyyy = dt.getUTCFullYear();\n  const mm = String(dt.getUTCMonth() + 1).padStart(2, \"0\");\n  const dd = String(dt.getUTCDate()).padStart(2, \"0\");\n  return `${yyyy}-${mm}-${dd}`;\n}\n\nfunction buildRangeDates(startIso, endIso) {\n  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(startIso) || !/^\\d{4}-\\d{2}-\\d{2}$/.test(endIso)) return [];\n  const start = startIso <= endIso ? startIso : endIso;\n  const end = startIso <= endIso ? endIso : startIso;\n  const out = [];\n  let cur = start;\n  while (cur <= end) {\n    out.push(cur);\n    cur = addDaysUTC(cur, 1);\n  }\n  return out;\n}\n\nlet dates = specificRaw ? parseSpecificDates(specificRaw) : buildRangeDates(rangeStart, rangeEnd);\nreturn dates.map((dueOn) => ({ json: { ...$json, dueOn } }));", "pipelines": {"Community": {"label": "Community", "tagId": "1213829155840330,1213829155840331,1213829155840332", "parentProjectId": "1202103624709695", "customFieldId": "1202103624709739", "customFieldValue": "1202103624709744", "processCode": "const searchResults = $items(\"Search Community Tasks\");\nconst dateInfos = $items(\"Expand Date Range\");\n\nconst tagMap = {\n  \"Community_IG\": { \n    parentTitle: \"Charms 22 Community IG\", \n    links: [\n      \"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1216756861031595\",\n      \"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1216756857903187\"\n    ]\n  },\n  \"Community_FB\": { \n    parentTitle: \"Charms 22 Community FB\", \n    links: [\n      \"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1216757031339849\",\n      \"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1216757031339863\"\n    ]\n  },\n  \"Community_X\": { \n    parentTitle: \"Charms 22 Community X\", \n    links: [\n      \"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1216756857867811\",\n      \"https://app.asana.com/1/54393662698285/project/1202103624709698/task/1216756857867825\"\n    ]\n  }\n};\n\nreturn dateInfos.flatMap((dateItem, index) => {\n  const dueOn = dateItem.json.runDateISO;\n  const prefix = dateItem.json.runDatePrefix;\n  const tasksFound = searchResults[index].json.data || [];\n\n  const allTagNames = tasksFound.flatMap(t => (t.tags || []).map(tag => tag.name));\n  const matchedTags = Object.keys(tagMap).filter(t => allTagNames.includes(t));\n\n  if (matchedTags.length === 0) return [];\n\n  return matchedTags.map(tagName => {\n    const conf = tagMap[tagName];\n    \n    // Assemble dynamic HTML using the updated links\n    const html = `<body><strong>General info:</strong><ul><li>${conf.parentTitle}</li><li>${conf.links[0]}</li><li>${conf.links[1]}</li></ul><strong>OPS:</strong></body>`;\n\n    return {\n      json: {\n        parentName: prefix ? `${prefix} - ${conf.parentTitle}` : conf.parentTitle,\n        parentHtml: html,\n        dueOn: dueOn,\n        _passThrough: {\n          baseName: conf.parentTitle,\n          runDatePrefix: prefix,\n          parentDueOn: dueOn\n        }\n      }\n    };\n  });\n});", "buildCode": "const parentInputs = $items(\"Process Tags & Build Parents\");\n\nreturn $input.all().flatMap((item, index) => {\n  const parentGid = $items(\"Create Parent Task\")[index].json.gid;\n  const passThrough = parentInputs[index].json._passThrough || {};\n\n  const baseName = passThrough.baseName;\n  const prefix = passThrough.runDatePrefix || \"\";\n  const parentDueOn = passThrough.parentDueOn;\n\n  if (!parentGid) return [];\n\n  return [\n    {\n      json: {\n        parentGid,\n        name: prefix ? `${prefix} - ${baseName}` : baseName,\n        assigneeGid: null,\n        dueOn: parentDueOn,\n        notes: \"\",\n        _passThrough: { projectGids: [\"1202720677378175\"] }\n      }\n    }\n  ];\n});"}}}
+</script>
+
+<script>
+const CLIENT_ID     = "1214940964091051";
+const CLIENT_SECRET = "20d6386dcb65b65a8043630f2121f600";
+const REDIRECT_URI  = window.location.href.split("?")[0].split("#")[0];
+const ASANA_AUTH    = "https://app.asana.com/-/oauth_authorize";
+const ASANA_TOKEN   = "https://app.asana.com/-/oauth_token";
+const ASANA_API     = "https://app.asana.com/api/1.0";
+
+let accessToken = localStorage.getItem("asana_token") || null;
+
+const SPEC = JSON.parse(document.getElementById("pipeline-spec").textContent);
+const WORKSPACE_GID = SPEC.workspaceGid;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+function loginWithAsana() {
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem("oauth_state", state);
+  window.location.href = `${ASANA_AUTH}?${new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code", state })}`;
+}
+async function exchangeCode(code) {
+  const res = await fetch(ASANA_TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "authorization_code", client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, code }) });
+  const data = await res.json();
+  if (data.access_token) { accessToken = data.access_token; localStorage.setItem("asana_token", accessToken); return true; }
+  return false;
+}
+function logout() {
+  localStorage.removeItem("asana_token");
+  accessToken = null;
+  document.getElementById("appArea").style.display = "none";
+  document.getElementById("loginArea").style.display = "block";
+}
+
+// ── ASANA API HELPERS ────────────────────────────────────────────────────
+async function asanaGet(path) {
+  const res = await fetch(`${ASANA_API}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPost(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "POST", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPut(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── N8N CODE-NODE SHIM ───────────────────────────────────────────────────
+// Runs the workflow's original Code-node bodies verbatim, so business logic
+// (HTML templates, subtask lists, date math) stays byte-identical to n8n.
+function runItemCode(code, jsonObj) {
+  return new Function("$json", code)(jsonObj);
+}
+function runBatchCode(code, itemsMap) {
+  const $items = (name) => itemsMap[name] || [];
+  const $input = { all: () => itemsMap.__input || [] };
+  return new Function("$items", "$input", code)($items, $input);
+}
+
+// ── DATE LIST ────────────────────────────────────────────────────────────
+function buildDatesList(rangeStart, rangeEnd, specificDates) {
+  const items = runItemCode(SPEC.buildDatesCode, { rangeStart, rangeEnd, specificDates });
+  return items.map(i => i.json.dueOn);
+}
+
+// ── PIPELINE UI ──────────────────────────────────────────────────────────
+const PIPELINE_LABELS = {
+  Community: "Community",
+};
+const pipelinesEl = document.getElementById("pipelines");
+Object.keys(SPEC.pipelines).forEach((key) => {
+  const div = document.createElement("div");
+  div.className = "pipe-item";
+  div.innerHTML = `<input type="checkbox" id="pipe_${key}" checked><label for="pipe_${key}">${PIPELINE_LABELS[key] || key}</label>`;
+  pipelinesEl.appendChild(div);
+});
+function setAllPipelines(v) {
+  Object.keys(SPEC.pipelines).forEach(key => document.getElementById(`pipe_${key}`).checked = v);
+}
+
+// ── LOG PANEL ────────────────────────────────────────────────────────────
+const logEl = document.getElementById("log");
+function log(text, cls) {
+  logEl.style.display = "block";
+  const div = document.createElement("div");
+  div.className = "line" + (cls ? " " + cls : "");
+  div.textContent = text;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ── PIPELINE RUNNER ──────────────────────────────────────────────────────
+async function runPipeline(key, dates) {
+  const p = SPEC.pipelines[key];
+  const label = p.label;
+  log(`▶ ${label}: searching ${dates.length} date(s)…`, "muted");
+
+  const searchResultsCtx = [];
+  for (const d of dates) {
+    const q = new URLSearchParams({
+      "tags.any": p.tagId,
+      "start_on.before": d,
+      "start_on.after": d,
+      "opt_fields": "name,tags.name,start_on,due_on",
+    });
+    const res = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
+    searchResultsCtx.push({ json: res });
+    await sleep(120);
+  }
+  const dateInfosCtx = dates.map(d => ({ json: { runDateISO: d } }));
+
+  const processedItems = runBatchCode(p.processCode, {
+    [`Search ${label} Tasks`]: searchResultsCtx,
+    "Expand Date Range": dateInfosCtx,
+  });
+
+  if (processedItems.length === 0) {
+    log(`  ${label}: no matching planning task found for any selected date — skipped.`, "warn");
+    return;
+  }
+  if (processedItems.length < dates.length) {
+    log(`  ${label}: ${dates.length - processedItems.length} date(s) had no matching planning task and were skipped.`, "warn");
+  }
+
+  const parentGidCtx = [];
+  for (const item of processedItems) {
+    try {
+      const created = await asanaPost("/tasks", {
+        name: item.json.parentName,
+        workspace: WORKSPACE_GID,
+        projects: [p.parentProjectId],
+        due_on: item.json.dueOn,
+      });
+      const gid = created.data.gid;
+      parentGidCtx.push({ json: { gid } });
+      await sleep(120);
+
+      await asanaPut(`/tasks/${gid}`, {
+        custom_fields: { [p.customFieldId]: p.customFieldValue },
+      });
+      await sleep(120);
+
+      await asanaPut(`/tasks/${gid}`, { html_notes: item.json.parentHtml });
+      await sleep(120);
+
+      log(`  ✓ ${label}: created parent "${item.json.parentName}"`, "ok");
+    } catch (e) {
+      parentGidCtx.push({ json: { gid: null } });
+      log(`  ✗ ${label}: failed to create parent "${item.json.parentName}" — ${e.message}`, "err");
+    }
+  }
+
+  const subtaskDefs = runBatchCode(p.buildCode, {
+    "Process Tags & Build Parents": processedItems,
+    "Create Parent Task": parentGidCtx,
+    __input: new Array(processedItems.length).fill({ json: {} }),
+  });
+
+  const subtaskResults = [];
+  for (const def of subtaskDefs) {
+    const j = def.json;
+    if (!j.parentGid) { subtaskResults.push(null); continue; }
+    try {
+      const created = await asanaPost(`/tasks/${j.parentGid}/subtasks`, {
+        name: j.name,
+        assignee: j.assigneeGid,
+        due_on: j.dueOn,
+        notes: j.notes,
+      });
+      subtaskResults.push({ gid: created.data.gid });
+      log(`    ✓ subtask "${j.name}"`, "ok");
+    } catch (e) {
+      subtaskResults.push(null);
+      log(`    ✗ subtask "${j.name}" — ${e.message}`, "err");
+    }
+    await sleep(120);
+  }
+
+  const projectRows = subtaskDefs.flatMap((def, idx) => {
+    const res = subtaskResults[idx];
+    if (!res) return [];
+    const pass = def.json._passThrough || {};
+    const projectGids = pass.projectGids || [];
+    return projectGids.map(pGid => ({ taskGid: res.gid, projectGid: pGid }));
+  });
+
+  for (const row of projectRows) {
+    try {
+      await asanaPost(`/tasks/${row.taskGid}/addProject`, { project: row.projectGid });
+      await sleep(120);
+    } catch (e) {
+      log(`    ✗ project link failed for a subtask — ${e.message}`, "err");
+    }
+  }
+
+  log(`■ ${label}: done.`, "muted");
+}
+
+async function runAll() {
+  const rangeStart = document.getElementById("rangeStart").value;
+  const rangeEnd = document.getElementById("rangeEnd").value;
+  const specificDates = document.getElementById("specificDates").value.trim();
+
+  const dates = buildDatesList(rangeStart, rangeEnd, specificDates);
+  if (dates.length === 0) {
+    alert("Enter a date range or specific dates first.");
+    return;
+  }
+
+  const selected = Object.keys(SPEC.pipelines).filter(key => document.getElementById(`pipe_${key}`).checked);
+  if (selected.length === 0) {
+    alert("Select at least one pipeline.");
+    return;
+  }
+
+  const labels = selected.map(k => PIPELINE_LABELS[k] || k).join(", ");
+  if (!confirm(`This will create real Asana tasks.\n\nDates: ${dates.join(", ")}\nPipelines: ${labels}\n\nContinue?`)) return;
+
+  const btn = document.getElementById("runBtn");
+  btn.disabled = true;
+  logEl.innerHTML = "";
+  logEl.style.display = "block";
+  log(`Starting run for ${dates.length} date(s) × ${selected.length} pipeline(s)…`, "muted");
+
+  for (const key of selected) {
+    try {
+      await runPipeline(key, dates);
+    } catch (e) {
+      log(`✗ ${PIPELINE_LABELS[key] || key}: ${e.message}`, "err");
+    }
+  }
+
+  log("All done.", "ok");
+  btn.disabled = false;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code"), state = params.get("state"), error = params.get("error");
+  if (code || error) window.history.replaceState({}, document.title, window.location.pathname);
+  if (error) {
+    document.getElementById("oauthError").style.display = "block";
+    document.getElementById("oauthError").textContent = `Asana login error: ${error}`;
+    return;
+  }
+  if (code) {
+    const saved = sessionStorage.getItem("oauth_state");
+    if (state !== saved) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "OAuth state mismatch.";
+      return;
+    }
+    sessionStorage.removeItem("oauth_state");
+    const ok = await exchangeCode(code);
+    if (!ok) {
+      document.getElementById("oauthError").style.display = "block";
+      document.getElementById("oauthError").textContent = "Failed to exchange login code.";
+      return;
+    }
+  }
+  if (accessToken) {
+    document.getElementById("loginArea").style.display = "none";
+    document.getElementById("appArea").style.display = "block";
+    try {
+      const me = await asanaGet("/users/me?opt_fields=name");
+      document.getElementById("userLabel").textContent = `Signed in as ${me.data.name}`;
+    } catch (e) { /* ignore */ }
+  } else {
+    document.getElementById("loginArea").style.display = "block";
+    document.getElementById("appArea").style.display = "none";
+  }
+}
+init();
+</script>
+</body>
+</html>
