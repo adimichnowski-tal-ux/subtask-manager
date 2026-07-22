@@ -673,15 +673,36 @@
 
 <script>
 // ── NAVIGATION ──
-function openTool(name) {
+// These in-page tool panels (currently just "task-desc") aren't separate
+// page loads, so without a real history entry, the browser's own Back
+// button skips past the menu and leaves the site entirely. pushState/
+// popstate gives each panel its own history entry so Back works the same
+// way here as it does for the other tools (which are real page links).
+function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
+  const el = document.getElementById('page-' + name);
+  (el || document.getElementById('page-home')).classList.add('active');
   window.scrollTo(0, 0);
 }
+function openTool(name) {
+  showPage(name);
+  history.pushState({ tool: name }, '', '#' + name);
+}
 function goHome() {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-home').classList.add('active');
-  window.scrollTo(0, 0);
+  if (history.state && history.state.tool && history.state.tool !== 'home') {
+    history.back();
+  } else {
+    showPage('home');
+  }
+}
+window.addEventListener('popstate', (e) => {
+  showPage((e.state && e.state.tool) || 'home');
+});
+if (location.hash === '#task-desc') {
+  showPage('task-desc');
+  history.replaceState({ tool: 'task-desc' }, '', location.hash);
+} else {
+  history.replaceState({ tool: 'home' }, '', location.pathname + location.search);
 }
 
 // ── TOGGLES ──
