@@ -459,7 +459,7 @@
       <a class="tool-card" onclick="openTool('instructions'); return false;" href="#">
         <div class="card-tag tag-green">✦ Guide</div>
         <div class="card-name">How to use these tools</div>
-        <div class="card-desc">Naming conventions, tag references, and walkthrough videos from Nikita's automation guide.</div>
+        <div class="card-desc">Naming conventions, tag references, and walkthrough videos for each tool.</div>
         <div class="card-arrow">Open tool <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></div>
       </a>
 
@@ -729,7 +729,7 @@
 
   <div class="tool-body">
     <h2 class="tool-title">How to use these tools</h2>
-    <p class="tool-desc">Naming conventions and tag references from Nikita's automation guide, so tasks come out named and tagged correctly. When in doubt, always use the <a href="https://docs.google.com/document/d/1S0zinq9Og9UBHLJFpa1mGNT9lreXSG6nOzd7vRpDryA/edit" target="_blank" rel="noopener">tag &amp; naming reference doc</a> for the exact tag to assign in Asana.</p>
+    <p class="tool-desc">How to name your placeholder tasks so each tool creates the right thing. If you're not sure which tag to use, check the <a href="https://docs.google.com/document/d/1S0zinq9Og9UBHLJFpa1mGNT9lreXSG6nOzd7vRpDryA/edit" target="_blank" rel="noopener">tag &amp; naming reference doc</a>.</p>
 
     <div class="section-block" style="margin-top:0;">
       <div class="section-block-head">Offers trigger</div>
@@ -799,17 +799,32 @@
     </div>
 
     <div class="section-block">
-      <div class="section-block-head">Walkthrough videos (Slack login required)</div>
+      <div class="section-block-head">Walkthrough videos</div>
       <div class="card" style="padding:16px 20px;">
-        <ul style="padding-left:18px; font-size:14px; line-height:1.7; color:var(--text);">
-          <li><a href="https://huuuge.slack.com/files/U040UN4TGE5/F0AT9MJL3SA/shop_and_po_process.mp4" target="_blank" rel="noopener">Shop &amp; PO process</a></li>
-          <li><a href="https://huuuge.slack.com/files/U040UN4TGE5/F0B2MN9NEUD/placements.mp4" target="_blank" rel="noopener">Art Tasks &amp; Placements</a></li>
-          <li><a href="https://huuuge.slack.com/files/U040UN4TGE5/F0B53KK6M1V/features_automation.mp4" target="_blank" rel="noopener">Features automation</a></li>
-        </ul>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+          <div>
+            <div style="font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text);">Shop &amp; PO process</div>
+            <video controls preload="metadata" style="width:100%; border-radius:8px; background:#000;">
+              <source src="videos/shop-and-po-process.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div>
+            <div style="font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text);">Art Tasks &amp; Placements</div>
+            <video controls preload="metadata" style="width:100%; border-radius:8px; background:#000;">
+              <source src="videos/placements.mp4" type="video/mp4">
+            </video>
+          </div>
+          <div>
+            <div style="font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text);">Features automation</div>
+            <video controls preload="metadata" style="width:100%; border-radius:8px; background:#000;">
+              <source src="videos/features-automation.mp4" type="video/mp4">
+            </video>
+          </div>
+        </div>
       </div>
     </div>
 
-    <p class="tool-desc" style="margin-top:24px;">Full history and any new updates from Nikita: <a href="https://huuuge.slack.com/archives/C0AU4P31LBS" target="_blank" rel="noopener">#n8n_autoamtion on Slack</a>.</p>
+    <p class="tool-desc" style="margin-top:24px;">Questions or updates: <a href="https://huuuge.slack.com/archives/C0AU4P31LBS" target="_blank" rel="noopener">#n8n_autoamtion on Slack</a>.</p>
   </div>
 </div>
 
