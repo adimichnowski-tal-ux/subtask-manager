@@ -1070,48 +1070,62 @@ function textToHtmlList(text) {
   if (!lines.length) return '';
   return '<ul>' + lines.map(l => `<li>${escapeHtml(l)}</li>`).join('') + '</ul>';
 }
+// Asana's html_notes only allows: body, strong, em, u, s, code, ol, ul, li,
+// a, blockquote, pre, h1, h2, hr/, img — no <br/>, so every line becomes its
+// own <li> (nested <ul> for a labeled sub-list) instead of a line break.
+// Sections with nothing in them are skipped entirely (no "TBD" filler) —
+// "Task type" isn't included since it duplicates the task's own "Type of
+// Issue" custom field.
+function wrapSection(header, items) {
+  const lines = items.filter(Boolean);
+  if (!lines.length) return null;
+  return `<strong>${header}</strong><ul>${lines.join('')}</ul>`;
+}
+function li(text) { return `<li>${escapeHtml(text)}</li>`; }
+function liSub(label, text) {
+  return text ? `<li><strong>${escapeHtml(label)}:</strong>${textToHtmlList(text)}</li>` : '';
+}
+
 function buildHtmlNotes(f) {
   const blocks = [];
 
-  let general = '<strong>General Info</strong>';
-  if (f.taskType) general += `<br/>Task type: ${escapeHtml(f.taskType)}`;
-  if (f.duration) general += `<br/>Duration: ${escapeHtml(f.duration)}`;
-  general += f.generalInfo ? textToHtmlList(f.generalInfo) : '<br/>TBD';
-  blocks.push(general);
+  blocks.push(wrapSection('General Info', [
+    f.duration ? li(`Duration: ${f.duration}`) : '',
+    ...(f.generalInfo ? f.generalInfo.split('\n').map(l => l.trim()).filter(Boolean).map(li) : []),
+  ]));
 
   if (f.sections.includes('economy')) {
-    blocks.push('<strong>Economy</strong>' + (f.economy ? textToHtmlList(f.economy) : '<br/>TBD'));
+    blocks.push(wrapSection('Economy', f.economy ? f.economy.split('\n').map(l => l.trim()).filter(Boolean).map(li) : []));
   }
 
   if (f.sections.includes('artcopy')) {
-    let b = '<strong>Art / Copy</strong>';
-    b += `<br/>Art flag: ${escapeHtml(f.artFlag)}`;
-    if (f.theme) b += `<br/>Leading theme: ${escapeHtml(f.theme)}`;
-    if (f.versions) b += `<br/>Number of versions: ${escapeHtml(f.versions)}`;
-    if (f.tnc) b += `<br/>TnC: ${escapeHtml(f.tnc)}`;
-    if (f.refs) b += `<br/>References: ${escapeHtml(f.refs)}`;
-    if (f.copyMsg) b += `<br/>Message to copywriter:${textToHtmlList(f.copyMsg)}`;
-    if (f.bannerLines.length) b += '<br/>Banners:<ul>' + f.bannerLines.map(l => `<li>${escapeHtml(l)}</li>`).join('') + '</ul>';
-    if (f.artNotes) b += `<br/>Art notes:${textToHtmlList(f.artNotes)}`;
-    blocks.push(b);
+    blocks.push(wrapSection('Art / Copy', [
+      li(`Art flag: ${f.artFlag}`),
+      f.theme ? li(`Leading theme: ${f.theme}`) : '',
+      f.versions ? li(`Number of versions: ${f.versions}`) : '',
+      f.tnc ? li(`TnC: ${f.tnc}`) : '',
+      f.refs ? li(`References: ${f.refs}`) : '',
+      liSub('Copy', f.copyMsg),
+      f.bannerLines.length ? `<li><strong>Banners:</strong><ul>${f.bannerLines.map(li).join('')}</ul></li>` : '',
+      liSub('Design notes', f.artNotes),
+    ]));
   }
 
-  if (f.sections.includes('ba')) blocks.push('<strong>BA</strong><br/>TBD');
+  if (f.sections.includes('ba')) blocks.push(wrapSection('BA', []));
 
   if (f.sections.includes('ops')) {
-    let b = '<strong>OPS</strong>';
-    if (f.seg) b += `<br/>Segmentation: ${escapeHtml(f.seg)}`;
-    if (f.promoType) b += `<br/>Promo type: ${escapeHtml(f.promoType)}`;
-    if (f.opsNotes) b += textToHtmlList(f.opsNotes);
-    if (!f.seg && !f.promoType && !f.opsNotes) b += '<br/>TBD';
-    blocks.push(b);
+    blocks.push(wrapSection('OPS', [
+      f.seg ? li(`Segmentation: ${f.seg}`) : '',
+      f.promoType ? li(`Promo type: ${f.promoType}`) : '',
+      liSub('Notes', f.opsNotes),
+    ]));
   }
 
-  if (f.sections.includes('ec')) blocks.push('<strong>EC</strong><br/>TBD');
-  if (f.sections.includes('vip')) blocks.push('<strong>VIP</strong><br/>TBD');
-  if (f.sections.includes('dotcom')) blocks.push('<strong>Dotcom / WS</strong><br/>TBD');
+  if (f.sections.includes('ec')) blocks.push(wrapSection('EC', []));
+  if (f.sections.includes('vip')) blocks.push(wrapSection('VIP', []));
+  if (f.sections.includes('dotcom')) blocks.push(wrapSection('Dotcom / WS', []));
 
-  return '<body>' + blocks.join('<hr/>') + '</body>';
+  return '<body>' + blocks.filter(Boolean).join('<hr/>') + '</body>';
 }
 
 // ── GENERATE ──
