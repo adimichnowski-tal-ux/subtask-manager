@@ -1074,44 +1074,44 @@ function buildHtmlNotes(f) {
   const blocks = [];
 
   let general = '<strong>General Info</strong>';
-  if (f.taskType) general += `<br>Task type: ${escapeHtml(f.taskType)}`;
-  if (f.duration) general += `<br>Duration: ${escapeHtml(f.duration)}`;
-  general += f.generalInfo ? textToHtmlList(f.generalInfo) : '<br>TBD';
+  if (f.taskType) general += `<br/>Task type: ${escapeHtml(f.taskType)}`;
+  if (f.duration) general += `<br/>Duration: ${escapeHtml(f.duration)}`;
+  general += f.generalInfo ? textToHtmlList(f.generalInfo) : '<br/>TBD';
   blocks.push(general);
 
   if (f.sections.includes('economy')) {
-    blocks.push('<strong>Economy</strong>' + (f.economy ? textToHtmlList(f.economy) : '<br>TBD'));
+    blocks.push('<strong>Economy</strong>' + (f.economy ? textToHtmlList(f.economy) : '<br/>TBD'));
   }
 
   if (f.sections.includes('artcopy')) {
     let b = '<strong>Art / Copy</strong>';
-    b += `<br>Art flag: ${escapeHtml(f.artFlag)}`;
-    if (f.theme) b += `<br>Leading theme: ${escapeHtml(f.theme)}`;
-    if (f.versions) b += `<br>Number of versions: ${escapeHtml(f.versions)}`;
-    if (f.tnc) b += `<br>TnC: ${escapeHtml(f.tnc)}`;
-    if (f.refs) b += `<br>References: ${escapeHtml(f.refs)}`;
-    if (f.copyMsg) b += `<br>Message to copywriter:${textToHtmlList(f.copyMsg)}`;
-    if (f.bannerLines.length) b += '<br>Banners:<ul>' + f.bannerLines.map(l => `<li>${escapeHtml(l)}</li>`).join('') + '</ul>';
-    if (f.artNotes) b += `<br>Art notes:${textToHtmlList(f.artNotes)}`;
+    b += `<br/>Art flag: ${escapeHtml(f.artFlag)}`;
+    if (f.theme) b += `<br/>Leading theme: ${escapeHtml(f.theme)}`;
+    if (f.versions) b += `<br/>Number of versions: ${escapeHtml(f.versions)}`;
+    if (f.tnc) b += `<br/>TnC: ${escapeHtml(f.tnc)}`;
+    if (f.refs) b += `<br/>References: ${escapeHtml(f.refs)}`;
+    if (f.copyMsg) b += `<br/>Message to copywriter:${textToHtmlList(f.copyMsg)}`;
+    if (f.bannerLines.length) b += '<br/>Banners:<ul>' + f.bannerLines.map(l => `<li>${escapeHtml(l)}</li>`).join('') + '</ul>';
+    if (f.artNotes) b += `<br/>Art notes:${textToHtmlList(f.artNotes)}`;
     blocks.push(b);
   }
 
-  if (f.sections.includes('ba')) blocks.push('<strong>BA</strong><br>TBD');
+  if (f.sections.includes('ba')) blocks.push('<strong>BA</strong><br/>TBD');
 
   if (f.sections.includes('ops')) {
     let b = '<strong>OPS</strong>';
-    if (f.seg) b += `<br>Segmentation: ${escapeHtml(f.seg)}`;
-    if (f.promoType) b += `<br>Promo type: ${escapeHtml(f.promoType)}`;
+    if (f.seg) b += `<br/>Segmentation: ${escapeHtml(f.seg)}`;
+    if (f.promoType) b += `<br/>Promo type: ${escapeHtml(f.promoType)}`;
     if (f.opsNotes) b += textToHtmlList(f.opsNotes);
-    if (!f.seg && !f.promoType && !f.opsNotes) b += '<br>TBD';
+    if (!f.seg && !f.promoType && !f.opsNotes) b += '<br/>TBD';
     blocks.push(b);
   }
 
-  if (f.sections.includes('ec')) blocks.push('<strong>EC</strong><br>TBD');
-  if (f.sections.includes('vip')) blocks.push('<strong>VIP</strong><br>TBD');
-  if (f.sections.includes('dotcom')) blocks.push('<strong>Dotcom / WS</strong><br>TBD');
+  if (f.sections.includes('ec')) blocks.push('<strong>EC</strong><br/>TBD');
+  if (f.sections.includes('vip')) blocks.push('<strong>VIP</strong><br/>TBD');
+  if (f.sections.includes('dotcom')) blocks.push('<strong>Dotcom / WS</strong><br/>TBD');
 
-  return '<body>' + blocks.join('<hr>') + '</body>';
+  return '<body>' + blocks.join('<hr/>') + '</body>';
 }
 
 // ── GENERATE ──
