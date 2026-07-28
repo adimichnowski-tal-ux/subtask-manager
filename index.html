@@ -24,6 +24,8 @@
     --accent-amber-bg: #FDF3E3;
     --accent-purple: #5B35C4;
     --accent-purple-bg: #F0ECFB;
+    --accent-red: #B23A2E;
+    --accent-red-bg: #FBEBE9;
     --radius: 14px;
     --radius-sm: 8px;
     --shadow-hover: rgba(0,0,0,0.07);
@@ -47,6 +49,8 @@
       --accent-amber-bg: rgba(232,180,106,0.10);
       --accent-purple: #9b8cff;
       --accent-purple-bg: rgba(155,140,255,0.12);
+      --accent-red: #e8756a;
+      --accent-red-bg: rgba(232,117,106,0.12);
       --shadow-hover: rgba(0,0,0,0.3);
     }
   }
@@ -436,6 +440,7 @@
   .status { display: none; margin-top: 16px; padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; line-height: 1.5; }
   .status.info { background: var(--accent-blue-bg); color: var(--accent-blue); display: block; }
   .status.success { background: var(--accent-green-bg); color: var(--accent-green); display: block; }
+  .status.err { background: var(--accent-red-bg); color: var(--accent-red); display: block; }
 
   /* ── SUBTASK PAGE ── */
   .subtask-iframe-wrap { width: 100%; }
@@ -547,6 +552,22 @@
   <div class="tool-body">
     <h2 class="tool-title">Task description generator</h2>
     <p class="tool-desc">Generate a structured description and push it directly to an Asana task.</p>
+
+    <div id="td-oauth-error" class="status err"></div>
+
+    <div id="td-login-area" style="display:none;">
+      <div class="card" style="padding:16px 20px; margin-bottom:20px;">
+        <div style="font-weight:600; margin-bottom:6px;">Connect your Asana account</div>
+        <div style="font-size:13px; color:var(--text-2); margin-bottom:14px;">Sign in with Asana so this tool can look up and update tasks directly.</div>
+        <button class="btn-primary" onclick="loginWithAsana('task-desc')">Login with Asana</button>
+      </div>
+    </div>
+
+    <div id="td-app-area" style="display:none;">
+    <div style="display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-bottom:12px;">
+      <span id="td-user-label" style="font-size:12px; color:var(--text-2);"></span>
+      <a onclick="logout()" style="font-size:12px; color:var(--accent-blue); cursor:pointer;">Log out</a>
+    </div>
 
     <!-- Task ID -->
     <div class="form-grid">
@@ -712,6 +733,7 @@
       <button class="btn-primary" onclick="generateDesc()">✦ Generate &amp; push to Asana</button>
     </div>
     <div class="status" id="td-status"></div>
+    </div>
   </div>
 </div>
 
@@ -862,6 +884,105 @@ if (location.hash === '#task-desc') {
   history.replaceState({ tool: 'home' }, '', location.pathname + location.search);
 }
 
+// ── ASANA OAUTH ──
+// Shared token via localStorage.asana_token (same origin as the other tool
+// pages), so logging in once from any tool signs in here too.
+const CLIENT_ID     = "1214940964091051";
+const CLIENT_SECRET = "20d6386dcb65b65a8043630f2121f600";
+const REDIRECT_URI  = window.location.href.split("?")[0].split("#")[0];
+const ASANA_AUTH    = "https://app.asana.com/-/oauth_authorize";
+const ASANA_TOKEN   = "https://app.asana.com/-/oauth_token";
+const ASANA_API     = "https://app.asana.com/api/1.0";
+
+let accessToken = localStorage.getItem("asana_token") || null;
+
+function loginWithAsana(returnPanel) {
+  if (returnPanel) sessionStorage.setItem("oauth_return_panel", returnPanel);
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem("oauth_state", state);
+  window.location.href = `${ASANA_AUTH}?${new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: REDIRECT_URI, response_type: "code", state })}`;
+}
+async function exchangeCode(code) {
+  const res = await fetch(ASANA_TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "authorization_code", client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, code }) });
+  const data = await res.json();
+  if (data.access_token) { accessToken = data.access_token; localStorage.setItem("asana_token", accessToken); return true; }
+  return false;
+}
+function logout() {
+  localStorage.removeItem("asana_token");
+  accessToken = null;
+  updateAuthUI();
+}
+async function asanaGet(path) {
+  const res = await fetch(`${ASANA_API}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+async function asanaPut(path, body) {
+  const res = await fetch(`${ASANA_API}${path}`, { method: "PUT", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: body }) });
+  const data = await res.json();
+  if (res.status === 401) { logout(); throw new Error("Session expired, please log in again."); }
+  if (data.errors) throw new Error(data.errors[0].message);
+  return data;
+}
+
+function updateAuthUI() {
+  const loginArea = document.getElementById('td-login-area');
+  const appArea = document.getElementById('td-app-area');
+  if (!loginArea || !appArea) return;
+  if (accessToken) {
+    loginArea.style.display = 'none';
+    appArea.style.display = 'block';
+  } else {
+    loginArea.style.display = 'block';
+    appArea.style.display = 'none';
+  }
+}
+updateAuthUI();
+
+async function initAuth() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code"), state = params.get("state"), error = params.get("error");
+  const returnPanel = sessionStorage.getItem("oauth_return_panel");
+  if (code || error) window.history.replaceState({}, document.title, window.location.pathname);
+
+  if (returnPanel) {
+    sessionStorage.removeItem("oauth_return_panel");
+    showPage(returnPanel);
+    history.replaceState({ tool: returnPanel }, '', '#' + returnPanel);
+  }
+
+  const errEl = document.getElementById('td-oauth-error');
+  if (error) {
+    if (errEl) { errEl.style.display = 'block'; errEl.textContent = `Asana login error: ${error}`; }
+    return;
+  }
+  if (code) {
+    const saved = sessionStorage.getItem("oauth_state");
+    sessionStorage.removeItem("oauth_state");
+    if (state !== saved) {
+      if (errEl) { errEl.style.display = 'block'; errEl.textContent = 'OAuth state mismatch — please try logging in again.'; }
+      return;
+    }
+    const ok = await exchangeCode(code);
+    if (!ok) {
+      if (errEl) { errEl.style.display = 'block'; errEl.textContent = 'Failed to exchange login code.'; }
+      return;
+    }
+    updateAuthUI();
+  }
+  if (accessToken) {
+    try {
+      const me = await asanaGet("/users/me?opt_fields=name");
+      const label = document.getElementById('td-user-label');
+      if (label) label.textContent = `Signed in as ${me.data.name}`;
+    } catch (e) { /* ignore */ }
+  }
+}
+initAuth();
+
 // ── TOGGLES ──
 document.querySelectorAll('.toggle').forEach(t => {
   t.addEventListener('click', () => {
@@ -920,19 +1041,86 @@ function addBanner() {
 }
 
 // ── TASK LOOKUP ──
-function lookupTask() {
+async function lookupTask() {
   const id = document.getElementById('td-taskid').value.trim();
-  if (!id) { alert('Please enter a task ID.'); return; }
   const s = document.getElementById('td-status');
+  if (!id) { s.className = 'status err'; s.textContent = 'Please enter a task ID.'; return; }
+  if (!accessToken) { s.className = 'status err'; s.textContent = 'Please log in with Asana first.'; return; }
   s.className = 'status info';
   s.textContent = 'Looking up task ' + id + '...';
-  window.parent && window.parent.postMessage({ type: 'sendPrompt', text: 'Look up Asana task ID ' + id + ' and show me its name, due date, and project — just a quick confirmation, no action needed.' }, '*');
-  if (typeof sendPrompt === 'function') sendPrompt('Look up Asana task ID ' + id + ' and show me its name, due date, and project — just a quick confirmation, no action needed.');
+  try {
+    const res = await asanaGet(`/tasks/${id}?opt_fields=name,due_on,start_on,memberships.project.name`);
+    const t = res.data;
+    const project = (t.memberships && t.memberships[0] && t.memberships[0].project) ? t.memberships[0].project.name : 'no project';
+    const date = t.due_on || t.start_on || 'no date set';
+    s.className = 'status success';
+    s.textContent = `"${t.name}" — due ${date} — in ${project}`;
+  } catch (e) {
+    s.className = 'status err';
+    s.textContent = 'Lookup failed: ' + e.message;
+  }
+}
+
+// ── HTML NOTES BUILDER ──
+function escapeHtml(str) {
+  return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function textToHtmlList(text) {
+  const lines = (text || '').split('\n').map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return '';
+  return '<ul>' + lines.map(l => `<li>${escapeHtml(l)}</li>`).join('') + '</ul>';
+}
+function buildHtmlNotes(f) {
+  const blocks = [];
+
+  let general = '<strong>General Info</strong>';
+  if (f.taskType) general += `<br>Task type: ${escapeHtml(f.taskType)}`;
+  if (f.duration) general += `<br>Duration: ${escapeHtml(f.duration)}`;
+  general += f.generalInfo ? textToHtmlList(f.generalInfo) : '<br>TBD';
+  blocks.push(general);
+
+  if (f.sections.includes('economy')) {
+    blocks.push('<strong>Economy</strong>' + (f.economy ? textToHtmlList(f.economy) : '<br>TBD'));
+  }
+
+  if (f.sections.includes('artcopy')) {
+    let b = '<strong>Art / Copy</strong>';
+    b += `<br>Art flag: ${escapeHtml(f.artFlag)}`;
+    if (f.theme) b += `<br>Leading theme: ${escapeHtml(f.theme)}`;
+    if (f.versions) b += `<br>Number of versions: ${escapeHtml(f.versions)}`;
+    if (f.tnc) b += `<br>TnC: ${escapeHtml(f.tnc)}`;
+    if (f.refs) b += `<br>References: ${escapeHtml(f.refs)}`;
+    if (f.copyMsg) b += `<br>Message to copywriter:${textToHtmlList(f.copyMsg)}`;
+    if (f.bannerLines.length) b += '<br>Banners:<ul>' + f.bannerLines.map(l => `<li>${escapeHtml(l)}</li>`).join('') + '</ul>';
+    if (f.artNotes) b += `<br>Art notes:${textToHtmlList(f.artNotes)}`;
+    blocks.push(b);
+  }
+
+  if (f.sections.includes('ba')) blocks.push('<strong>BA</strong><br>TBD');
+
+  if (f.sections.includes('ops')) {
+    let b = '<strong>OPS</strong>';
+    if (f.seg) b += `<br>Segmentation: ${escapeHtml(f.seg)}`;
+    if (f.promoType) b += `<br>Promo type: ${escapeHtml(f.promoType)}`;
+    if (f.opsNotes) b += textToHtmlList(f.opsNotes);
+    if (!f.seg && !f.promoType && !f.opsNotes) b += '<br>TBD';
+    blocks.push(b);
+  }
+
+  if (f.sections.includes('ec')) blocks.push('<strong>EC</strong><br>TBD');
+  if (f.sections.includes('vip')) blocks.push('<strong>VIP</strong><br>TBD');
+  if (f.sections.includes('dotcom')) blocks.push('<strong>Dotcom / WS</strong><br>TBD');
+
+  return '<body>' + blocks.join('<hr>') + '</body>';
 }
 
 // ── GENERATE ──
-function generateDesc() {
+async function generateDesc() {
   const taskId = document.getElementById('td-taskid').value.trim();
+  const s = document.getElementById('td-status');
+  if (!taskId) { s.className = 'status err'; s.textContent = 'Please enter an Asana task ID.'; return; }
+  if (!accessToken) { s.className = 'status err'; s.textContent = 'Please log in with Asana first.'; return; }
+
   const taskType = document.getElementById('td-type').value;
   const duration = document.getElementById('td-duration').value.trim();
   const generalInfo = rteText(document.getElementById('td-general'));
@@ -949,51 +1137,27 @@ function generateDesc() {
   const opsNotes = rteText(document.getElementById('td-ops-notes'));
   const sections = [...document.querySelectorAll('.toggle.on')].map(t => t.dataset.sec);
 
-  const banners = [...document.querySelectorAll('.banner-card')].map(b => ({
-    name: b.querySelector('.b-name').value.trim(),
-    ver: b.querySelector('.b-ver').value.trim(),
-    desc: b.querySelector('.b-desc').value.trim()
-  })).filter(b => b.name || b.desc);
+  const bannerLines = [...document.querySelectorAll('.banner-card')].map(b => {
+    const name = b.querySelector('.b-name').value.trim();
+    const ver = b.querySelector('.b-ver').value.trim();
+    const desc = b.querySelector('.b-desc').value.trim();
+    if (!name && !desc) return null;
+    return `${name || 'Banner'}${ver ? ' (' + ver + ')' : ''}: ${desc || 'TBD'}`;
+  }).filter(Boolean);
 
-  const bannerBlock = banners.length
-    ? '\nBanners:\n' + banners.map((b,i) => `    Banner ${i+1}${b.name?' - '+b.name:''}${b.ver?' ('+b.ver+')':''}:\n        ${b.desc||'TBD'}`).join('\n')
-    : '';
+  const htmlNotes = buildHtmlNotes({ taskType, duration, generalInfo, sections, economy, artFlag, theme, versions, tnc, refs, copyMsg, bannerLines, artNotes, seg, promoType, opsNotes });
 
-  const prompt = `Generate an Asana task description for a promo calendar task at Huuuge Games.
-
-FORMAT RULES:
-- Always include ALL sections in this order: General Info, Economy, Art/Copy, BA, OPS, plus any extras requested
-- Section separator: use a blank line with --- on its own line between sections (Asana renders this as a divider)
-- Bold section headers
-- Use actual bullet points inside sections
-- Terse operational tone
-- Preserve all user content verbatim
-
-SECTIONS TO INCLUDE: ${sections.join(', ')} (always include General Info)
-
-INPUT:
-Task type: ${taskType || 'not specified'}
-Duration: ${duration || 'TBD'}
-General info: ${generalInfo || 'TBD'}
-Economy: ${economy || 'TBD'}
-Art flag: ${artFlag}
-Leading theme: ${theme || 'TBD'}
-Number of versions: ${versions || 'TBD'}
-TnC: ${tnc || 'TBD'}
-Message to copywriter: ${copyMsg || 'TBD'}${bannerBlock}
-Art notes: ${artNotes || 'none'}
-References: ${refs || 'none'}
-OPS promo type: ${promoType || 'TBD'}
-OPS segmentation: ${seg || 'TBD'}
-OPS notes: ${opsNotes || 'none'}
-
-Push the result to Asana task ${taskId || '[no task ID provided]'} using html_notes with <strong> headers, <ul> bullets, and <hr/> dividers.`;
-
-  const s = document.getElementById('td-status');
   s.className = 'status info';
-  s.textContent = taskId ? 'Generating and pushing to Asana task ' + taskId + '...' : 'Generating description...';
+  s.textContent = 'Generating and pushing to Asana task ' + taskId + '...';
 
-  if (typeof sendPrompt === 'function') sendPrompt(prompt);
+  try {
+    await asanaPut(`/tasks/${taskId}`, { html_notes: htmlNotes });
+    s.className = 'status success';
+    s.textContent = 'Description pushed to Asana task ' + taskId + '.';
+  } catch (e) {
+    s.className = 'status err';
+    s.textContent = 'Push failed: ' + e.message;
+  }
 }
 </script>
 </body>
