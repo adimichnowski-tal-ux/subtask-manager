@@ -1073,18 +1073,18 @@ function textToHtmlList(text) {
 // Asana's html_notes only allows: body, strong, em, u, s, code, ol, ul, li,
 // a, blockquote, pre, h1, h2, hr/, img — no <br/>, so every line becomes its
 // own <li> (nested <ul> for a labeled sub-list) instead of a line break.
-// Sections with nothing in them are skipped entirely (no "TBD" filler) —
-// "Task type" isn't included since it duplicates the task's own "Type of
-// Issue" custom field.
+// The header always shows once a section is toggled on, even with nothing
+// under it — no "TBD" filler, just an empty section. "Task type" isn't
+// included since it duplicates the task's own "Type of Issue" custom field.
 function wrapSection(header, items) {
   const lines = items.filter(Boolean);
-  if (!lines.length) return null;
-  return `<strong>${header}</strong><ul>${lines.join('')}</ul>`;
+  return `<strong>${header}</strong>` + (lines.length ? `<ul>${lines.join('')}</ul>` : '');
 }
 function li(text) { return `<li>${escapeHtml(text)}</li>`; }
 function liSub(label, text) {
   return text ? `<li><strong>${escapeHtml(label)}:</strong>${textToHtmlList(text)}</li>` : '';
 }
+const ART_FLAG_EMOJI = '🎨🎨';
 
 function buildHtmlNotes(f) {
   const blocks = [];
@@ -1099,8 +1099,7 @@ function buildHtmlNotes(f) {
   }
 
   if (f.sections.includes('artcopy')) {
-    blocks.push(wrapSection('Art / Copy', [
-      li(`Art flag: ${f.artFlag}`),
+    const items = [
       f.theme ? li(`Leading theme: ${f.theme}`) : '',
       f.versions ? li(`Number of versions: ${f.versions}`) : '',
       f.tnc ? li(`TnC: ${f.tnc}`) : '',
@@ -1108,13 +1107,16 @@ function buildHtmlNotes(f) {
       liSub('Copy', f.copyMsg),
       f.bannerLines.length ? `<li><strong>Banners:</strong><ul>${f.bannerLines.map(li).join('')}</ul></li>` : '',
       liSub('Design notes', f.artNotes),
-    ]));
+    ].filter(Boolean);
+    let b = `<strong>Art / Copy</strong><strong>${escapeHtml(f.artFlag)} ${ART_FLAG_EMOJI}</strong>`;
+    if (items.length) b += `<ul>${items.join('')}</ul>`;
+    blocks.push(b);
   }
 
   if (f.sections.includes('ba')) blocks.push(wrapSection('BA', []));
 
   if (f.sections.includes('ops')) {
-    blocks.push(wrapSection('OPS', [
+    blocks.push(wrapSection('OPS:', [
       f.seg ? li(`Segmentation: ${f.seg}`) : '',
       f.promoType ? li(`Promo type: ${f.promoType}`) : '',
       liSub('Notes', f.opsNotes),
