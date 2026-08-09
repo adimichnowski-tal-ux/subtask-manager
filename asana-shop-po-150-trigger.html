@@ -249,6 +249,7 @@ async function runPipeline(key, dates) {
   const label = p.label;
   log(`▶ ${label}: searching ${dates.length} date(s)…`, "muted");
 
+  const otherField = p.dateField === "start_on" ? "due_on" : "start_on";
   const searchResultsCtx = [];
   for (const d of dates) {
     const q = new URLSearchParams({
@@ -257,9 +258,22 @@ async function runPipeline(key, dates) {
       [`${p.dateField}.after`]: d,
       "opt_fields": "name,tags.name,start_on,due_on",
     });
-    const res = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
-    searchResultsCtx.push({ json: res });
+    let res = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
     await sleep(120);
+
+    // Fall back to the other date field if nothing matches on the primary one for this day.
+    if (!res.data || res.data.length === 0) {
+      const qFallback = new URLSearchParams({
+        "tags.any": p.tagId,
+        [`${otherField}.before`]: d,
+        [`${otherField}.after`]: d,
+        "opt_fields": "name,tags.name,start_on,due_on",
+      });
+      res = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${qFallback}`);
+      await sleep(120);
+    }
+
+    searchResultsCtx.push({ json: res });
   }
   const dateInfosCtx = dates.map(d => ({ json: { runDateISO: d } }));
 

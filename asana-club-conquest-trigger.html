@@ -244,14 +244,27 @@ async function runPipeline(key, rangeStart, rangeEnd) {
   const label = p.label;
   log(`▶ ${label}: searching planning tasks by ${p.dateField} ${rangeStart} – ${rangeEnd}…`, "muted");
 
+  const otherField = p.dateField === "start_on" ? "due_on" : "start_on";
   const q = new URLSearchParams({
     "tags.any": p.tagId,
     [`${p.dateField}.after`]: rangeStart,
     [`${p.dateField}.before`]: rangeEnd,
     "opt_fields": "name,tags.name,start_on,due_on",
   });
-  const searchRes = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
+  let searchRes = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
   await sleep(120);
+
+  // Fall back to the other date field if nothing matches on the primary one in that range.
+  if (!searchRes.data || searchRes.data.length === 0) {
+    const qFallback = new URLSearchParams({
+      "tags.any": p.tagId,
+      [`${otherField}.after`]: rangeStart,
+      [`${otherField}.before`]: rangeEnd,
+      "opt_fields": "name,tags.name,start_on,due_on",
+    });
+    searchRes = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${qFallback}`);
+    await sleep(120);
+  }
 
   const processedItems = runBatchCode(p.processCode, {
     [`Search ${label} Tasks`]: [{ json: searchRes }],

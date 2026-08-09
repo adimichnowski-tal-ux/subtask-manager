@@ -251,15 +251,28 @@ async function runPipeline(key, dates) {
 
   const searchResultsCtx = [];
   for (const d of dates) {
-    const q = new URLSearchParams({
+    const qStart = new URLSearchParams({
       "tags.any": p.tagId,
       "start_on.before": d,
       "start_on.after": d,
       "opt_fields": "name,tags.name,start_on,due_on",
     });
-    const res = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${q}`);
-    searchResultsCtx.push({ json: res });
+    let res = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${qStart}`);
     await sleep(120);
+
+    // Fall back to matching by due date if nothing has a start date set for this day.
+    if (!res.data || res.data.length === 0) {
+      const qDue = new URLSearchParams({
+        "tags.any": p.tagId,
+        "due_on.before": d,
+        "due_on.after": d,
+        "opt_fields": "name,tags.name,start_on,due_on",
+      });
+      res = await asanaGet(`/workspaces/${WORKSPACE_GID}/tasks/search?${qDue}`);
+      await sleep(120);
+    }
+
+    searchResultsCtx.push({ json: res });
   }
   const dateInfosCtx = dates.map(d => ({ json: { runDateISO: d } }));
 
